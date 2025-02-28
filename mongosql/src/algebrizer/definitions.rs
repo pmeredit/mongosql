@@ -562,6 +562,7 @@ impl<'a> Algebrizer<'a> {
             ast::Datasource::Derived(d) => self.algebrize_derived_datasource(d),
             ast::Datasource::Flatten(f) => self.algebrize_flatten_datasource(f),
             ast::Datasource::Unwind(u) => self.algebrize_unwind_datasource(u),
+            ast::Datasource::ExtendedUnwind(_) => unreachable!("ExtendedUnwind must be rewritten"),
         }
     }
 

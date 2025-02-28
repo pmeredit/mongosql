@@ -61,6 +61,7 @@ pub fn translate_sql(
 ) -> Result<Translation> {
     // parse the query and apply syntactic rewrites
     let ast = parser::parse_query(sql)?;
+    dbg!(&ast);
     let ast = ast::rewrites::rewrite_query(ast)?;
     let select_order = get_select_order(&ast);
 
