@@ -19,6 +19,7 @@ macro_rules! test_type_conversion_op {
                         required: set!{"foo".to_string()},
                         ..Default::default()
                     }),
+                    current_db: "test".to_string(),
                     null_behavior: Satisfaction::Not
                 };
                 let input: Expression = serde_json::from_str(format!("{{\"{0}\":\"$foo\"}}", $op).as_str()).unwrap();
@@ -149,6 +150,18 @@ mod array_ops {
             Schema::Atomic(Atomic::Integer),
             Schema::Atomic(Atomic::Double)
         ))))
+    );
+    test_derive_expression_schema!(
+        first_array,
+        expected = Ok(Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Integer),
+            Schema::Atomic(Atomic::Double),
+        ))),
+        input = r#"{"$first": ["$foo", [42, 53]]}"#,
+        ref_schema = Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Integer),
+            Schema::Atomic(Atomic::Double)
+        ))
     );
 }
 
@@ -352,6 +365,88 @@ mod window_ops {
             Schema::Atomic(Atomic::Integer),
             Schema::Atomic(Atomic::Null),
         ))
+    );
+    test_derive_expression_schema!(
+        max,
+        expected = Ok(Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Decimal),
+            Schema::Atomic(Atomic::Double),
+        ))),
+        input = r#"{"$max": "$foo" }"#,
+        ref_schema = Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Decimal),
+            Schema::Atomic(Atomic::Double),
+            Schema::Atomic(Atomic::Null),
+        ))
+    );
+    test_derive_expression_schema!(
+        min,
+        expected = Ok(Schema::Atomic(Atomic::Null)),
+        input = r#"{"$min": "$foo" }"#,
+        ref_schema = Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Decimal),
+            Schema::Atomic(Atomic::Double),
+            Schema::Atomic(Atomic::Null),
+        ))
+    );
+    test_derive_expression_schema!(
+        push,
+        expected = Ok(Schema::Array(Box::new(Schema::Array(Box::new(
+            Schema::AnyOf(set!(
+                Schema::Atomic(Atomic::Integer),
+                Schema::Atomic(Atomic::Long),
+                Schema::Atomic(Atomic::Decimal),
+            ))
+        ))))),
+        input = r#"{"$push": "$foo" }"#,
+        ref_schema = Schema::Array(Box::new(Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Integer),
+            Schema::Atomic(Atomic::Long),
+            Schema::Atomic(Atomic::Decimal),
+        ))))
+    );
+    test_derive_expression_schema!(
+        std_dev_pop,
+        expected = Ok(Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Decimal),
+            Schema::Atomic(Atomic::Double),
+            Schema::Atomic(Atomic::Null),
+        ))),
+        input = r#"{"$stdDevPop": "$foo" }"#,
+        ref_schema = Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Decimal),
+            Schema::Atomic(Atomic::Double),
+            Schema::Atomic(Atomic::Null),
+        ))
+    );
+    test_derive_expression_schema!(
+        std_dev_samp,
+        expected = Ok(Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Decimal),
+            Schema::Atomic(Atomic::Double),
+            Schema::Atomic(Atomic::Null),
+        ))),
+        input = r#"{"$stdDevSamp": "$foo" }"#,
+        ref_schema = Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Decimal),
+            Schema::Atomic(Atomic::Double),
+            Schema::Atomic(Atomic::Null),
+        ))
+    );
+    test_derive_expression_schema!(
+        sum,
+        expected = Ok(Schema::Atomic(Atomic::Decimal)),
+        input = r#"{"$sum": "$foo" }"#,
+        ref_schema = Schema::AnyOf(set!(
+            Schema::Atomic(Atomic::Integer),
+            Schema::Atomic(Atomic::Long),
+            Schema::Atomic(Atomic::Decimal),
+        ))
+    );
+    test_derive_expression_schema!(
+        first_non_array,
+        expected = Ok(Schema::Atomic(Atomic::String)),
+        input = r#"{"$first": "hello world"}"#
     );
 }
 mod numeric_ops {

@@ -5145,7 +5145,7 @@ mod expression {
 mod aggregation {
     use crate::{
         ast, map, mir, multimap,
-        schema::{Atomic, Schema, ANY_DOCUMENT, NUMERIC_OR_NULLISH},
+        schema::{Atomic, Satisfaction, Schema, ANY_DOCUMENT, NUMERIC_OR_NULLISH},
         unchecked_unique_linked_hash_map,
         usererror::UserError,
     };
@@ -5177,6 +5177,7 @@ mod aggregation {
                 function: mir::AggregationFunction::Count,
                 distinct: false,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5195,6 +5196,7 @@ mod aggregation {
                 function: mir::AggregationFunction::Count,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5243,6 +5245,7 @@ mod aggregation {
                 function: mir::AggregationFunction::Sum,
                 distinct: false,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5261,6 +5264,7 @@ mod aggregation {
                 function: mir::AggregationFunction::Sum,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5297,6 +5301,7 @@ mod aggregation {
                 function: mir::AggregationFunction::Avg,
                 distinct: false,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5315,6 +5320,7 @@ mod aggregation {
                 function: mir::AggregationFunction::Avg,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5352,6 +5358,7 @@ mod aggregation {
                 function: mir::AggregationFunction::StddevPop,
                 distinct: false,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5370,6 +5377,7 @@ mod aggregation {
                 function: mir::AggregationFunction::StddevPop,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5406,6 +5414,7 @@ mod aggregation {
                 function: mir::AggregationFunction::StddevSamp,
                 distinct: false,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5424,6 +5433,7 @@ mod aggregation {
                 function: mir::AggregationFunction::StddevSamp,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5460,6 +5470,7 @@ mod aggregation {
                 function: mir::AggregationFunction::AddToArray,
                 distinct: false,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5478,6 +5489,7 @@ mod aggregation {
                 function: mir::AggregationFunction::AddToArray,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5497,6 +5509,7 @@ mod aggregation {
                 function: mir::AggregationFunction::AddToArray,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5515,6 +5528,7 @@ mod aggregation {
                 function: mir::AggregationFunction::AddToArray,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5534,6 +5548,7 @@ mod aggregation {
                 function: mir::AggregationFunction::First,
                 distinct: false,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5552,6 +5567,7 @@ mod aggregation {
                 function: mir::AggregationFunction::First,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5571,6 +5587,7 @@ mod aggregation {
                 function: mir::AggregationFunction::Last,
                 distinct: false,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5589,6 +5606,7 @@ mod aggregation {
                 function: mir::AggregationFunction::Last,
                 distinct: true,
                 arg: mir::Expression::Literal(mir::LiteralValue::Integer(42)).into(),
+                arg_is_possibly_doc: Satisfaction::Not,
             }
         )),
         input = ast::FunctionExpr {
@@ -5613,7 +5631,8 @@ mod aggregation {
                         "b".into() => mir::Expression::Literal(mir::LiteralValue::Integer(42)),
                     }
                     .into()
-                ))
+                )),
+                arg_is_possibly_doc: Satisfaction::Must,
             }
         )),
         input = ast::FunctionExpr {
@@ -5648,7 +5667,7 @@ mod select_clause {
     use super::catalog;
     use crate::{
         ast, map,
-        mir::{self, binding_tuple::Key, schema::SchemaCache},
+        mir::{self, binding_tuple::Key, schema::SchemaCache, Expression, Project, Stage},
         multimap,
         schema::ANY_DOCUMENT,
         unchecked_unique_linked_hash_map,
@@ -5664,20 +5683,97 @@ mod select_clause {
     }
 
     test_algebrize!(
-        select_distinct_not_allowed,
+        select_values_distinct,
         method = algebrize_select_clause,
-        expected = Err(Error::DistinctSelect),
-        expected_error_code = 3005,
+        expected = Ok(Stage::Project(Project {
+            is_add_fields: false,
+            source: Box::new(Stage::Group(mir::Group {
+                source: Box::new(Stage::Project(Project {
+                    is_add_fields: false,
+                    source: Box::new(source()),
+                    expression: map! {
+                        ("foo", 1u16).into() => Expression::Reference(("foo", 0u16).into()),
+                        ("bar", 1u16).into() => Expression::Reference(("bar", 0u16).into()),
+                    },
+                    cache: SchemaCache::new(),
+                })),
+                keys: vec![
+                    mir::OptionallyAliasedExpr::Aliased(mir::AliasedExpr {
+                        alias: "__groupKey0".into(),
+                        expr: Expression::Reference(("bar", 1u16).into()),
+                    }),
+                    mir::OptionallyAliasedExpr::Aliased(mir::AliasedExpr {
+                        alias: "__groupKey1".into(),
+                        expr: Expression::Reference(("foo", 1u16).into()),
+                    }),
+                ],
+                aggregations: vec![],
+                cache: SchemaCache::new(),
+                scope: 1,
+            })),
+            expression: map! {
+                ("bar", 1u16).into() => Expression::FieldAccess(mir::FieldAccess {
+                    expr: Box::new(Expression::Reference(Key::bot(1u16).into())),
+                field: "__groupKey0".into(),
+                    is_nullable: true,
+                }),
+                ("foo", 1u16).into() => Expression::FieldAccess(mir::FieldAccess {
+                    expr: Box::new(Expression::Reference(Key::bot(1u16).into())),
+                field: "__groupKey1".into(),
+                    is_nullable: true,
+                }),
+            },
+            cache: SchemaCache::new(),
+        })),
         input = ast::SelectClause {
             set_quantifier: ast::SetQuantifier::Distinct,
-            body: ast::SelectBody::Values(vec![ast::SelectValuesExpression::Expression(
-                ast::Expression::Identifier("foo".into())
-            ),]),
+            body: ast::SelectBody::Values(vec![
+                ast::SelectValuesExpression::Substar("foo".into()),
+                ast::SelectValuesExpression::Substar("bar".into())
+            ]),
+        },
+        source = source(),
+        env = map! {
+            ("foo", 0u16).into() => ANY_DOCUMENT.clone(),
+            ("bar", 0u16).into() => ANY_DOCUMENT.clone(),
+        },
+        catalog = catalog(vec![("test", "baz")]),
+        is_add_fields = false,
+    );
+
+    test_algebrize!(
+        select_star_distinct,
+        method = algebrize_select_clause,
+        expected = Ok(Stage::Project(Project {
+            is_add_fields: false,
+            cache: SchemaCache::new(),
+            source: Box::new(Stage::Group(mir::Group {
+                source: Box::new(source()),
+                keys: vec![mir::OptionallyAliasedExpr::Aliased(mir::AliasedExpr {
+                    alias: "__groupKey0".into(),
+                    expr: Expression::Reference(("baz", 1u16).into()),
+                }),],
+                aggregations: vec![],
+                cache: SchemaCache::new(),
+                scope: 1,
+            })),
+            expression: map! {
+                ("baz", 1u16).into() => Expression::FieldAccess(mir::FieldAccess {
+                    expr: Box::new(Expression::Reference(Key::bot(1u16).into())),
+                field: "__groupKey0".into(),
+                    is_nullable: true,
+                })
+            },
+        })),
+        input = ast::SelectClause {
+            set_quantifier: ast::SetQuantifier::Distinct,
+            body: ast::SelectBody::Standard(vec![ast::SelectExpression::Star])
         },
         source = source(),
         env = map! {
             ("foo", 0u16).into() => ANY_DOCUMENT.clone(),
         },
+        catalog = catalog(vec![("test", "baz")]),
         is_add_fields = false,
     );
     test_algebrize!(
@@ -7547,7 +7643,8 @@ mod order_by_clause {
 
 mod group_by_clause {
     use crate::{
-        ast, mir, mir::schema::SchemaCache, unchecked_unique_linked_hash_map, usererror::UserError,
+        ast, mir, mir::schema::SchemaCache, schema::Satisfaction, unchecked_unique_linked_hash_map,
+        usererror::UserError,
     };
     use lazy_static::lazy_static;
 
@@ -7615,6 +7712,7 @@ mod group_by_clause {
                     is_nullable: false,
                 })),
                 distinct: true,
+                arg_is_possibly_doc: Satisfaction::Not,
             }),
         }
     }
