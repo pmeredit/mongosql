@@ -313,7 +313,7 @@ impl PrettyPrint for Datasource {
             Datasource::Join(j) => j.pretty_print(),
             Datasource::Flatten(f) => f.pretty_print(),
             Datasource::Unwind(u) => u.pretty_print(),
-            Datasource::ExtendedUnwind(u) => todo!(),
+            Datasource::ExtendedUnwind(_u) => todo!(),
         }
     }
 }
