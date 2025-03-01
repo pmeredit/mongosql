@@ -56,25 +56,19 @@ impl Visitor for ExtendedUnwindRewriteVisitor {
                         options: Vec::new(),
                     });
                 }
-                dbg!(create_unwind_datasource(
-                    *source,
-                    paths.unwrap(),
-                    global_index,
-                    global_outer
-                ))
+                create_unwind_datasource(*source, paths.unwrap(), global_index, global_outer)
             }
             _ => data_source,
         }
     }
 }
 
-fn string_to_path(path: String) -> Expression {
-    let sp: Vec<_> = path.split('.').collect();
-    if sp.len() == 1 {
-        return Expression::Identifier(sp[0].to_string());
+fn path_vec_to_path(mut path: Vec<String>) -> Expression {
+    if path.len() == 1 {
+        return Expression::Identifier(path.remove(0));
     }
-    let mut ret = Expression::Identifier(sp[0].to_string());
-    for p in sp.into_iter().skip(1) {
+    let mut ret = Expression::Identifier(path.remove(0));
+    for p in path.into_iter() {
         ret = Expression::Subpath(SubpathExpr {
             expr: Box::new(ret),
             subpath: p.to_string(),
@@ -85,11 +79,11 @@ fn string_to_path(path: String) -> Expression {
 
 fn get_options(
     options: Vec<UnwindPathPartOption>,
-    path: String,
+    path: Vec<String>,
     global_index: Option<String>,
     global_outer: bool,
 ) -> Vec<UnwindOption> {
-    let mut ret = vec![UnwindOption::Path(string_to_path(path))];
+    let mut ret = vec![UnwindOption::Path(path_vec_to_path(path))];
     let mut found_index = false;
     let mut found_outer = false;
     for option in options.into_iter() {
@@ -117,36 +111,38 @@ fn get_options(
 
 fn create_unwind_datasource(
     source: Datasource,
-    mut paths: Vec<Vec<UnwindPathPart>>,
+    paths: Vec<Vec<UnwindPathPart>>,
     global_index: Option<String>,
     global_outer: bool,
 ) -> Datasource {
-    if paths.is_empty() {
-        return source;
+    let mut ret = source;
+    for path in paths {
+        ret = create_unwind_datasource_for_path(ret, path, global_index.clone(), global_outer);
     }
-    let mut current_path = paths.pop().unwrap();
-    if current_path.is_empty() {
-        return create_unwind_datasource(source, paths, global_index, global_outer);
+    ret
+}
+
+fn create_unwind_datasource_for_path(
+    source: Datasource,
+    path: Vec<UnwindPathPart>,
+    global_index: Option<String>,
+    global_outer: bool,
+) -> Datasource {
+    let mut ret = source;
+    let mut subpath = Vec::new();
+    for path_part in path.into_iter() {
+        subpath.push(path_part.field);
+        // if the options are empty, we are not unwinding at this point in the path
+        if path_part.options.is_empty() {
+            continue;
+        }
+        for options in path_part.options {
+            let options = get_options(options, subpath.clone(), global_index.clone(), global_outer);
+            ret = Datasource::Unwind(UnwindSource {
+                datasource: Box::new(ret),
+                options,
+            });
+        }
     }
-    let mut current_part = current_path.remove(0);
-    if !current_path.is_empty() {
-        paths.push(current_path);
-    }
-    //  TODO: handle nested arrays
-    let options = get_options(
-        current_part.options.pop().unwrap(),
-        // TEMP HACK
-        "a.b".to_string(),
-        global_index.clone(),
-        global_outer,
-    );
-    create_unwind_datasource(
-        Datasource::Unwind(UnwindSource {
-            datasource: Box::new(source),
-            options,
-        }),
-        paths,
-        global_index,
-        global_outer,
-    )
+    ret
 }
