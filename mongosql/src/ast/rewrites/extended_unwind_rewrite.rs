@@ -6,6 +6,7 @@ use crate::ast::{
     },
     rewrites::{Error, Pass, Result},
     visitor::Visitor,
+    SubpathExpr,
 };
 
 pub struct ExtendedUnwindRewritePass;
@@ -55,11 +56,63 @@ impl Visitor for ExtendedUnwindRewriteVisitor {
                         options: Vec::new(),
                     });
                 }
-                create_unwind_datasource(*source, paths.unwrap(), global_index, global_outer)
+                dbg!(create_unwind_datasource(
+                    *source,
+                    paths.unwrap(),
+                    global_index,
+                    global_outer
+                ))
             }
             _ => data_source,
         }
     }
+}
+
+fn string_to_path(path: String) -> Expression {
+    let sp: Vec<_> = path.split('.').collect();
+    if sp.len() == 1 {
+        return Expression::Identifier(sp[0].to_string());
+    }
+    let mut ret = Expression::Identifier(sp[0].to_string());
+    for p in sp.into_iter().skip(1) {
+        ret = Expression::Subpath(SubpathExpr {
+            expr: Box::new(ret),
+            subpath: p.to_string(),
+        });
+    }
+    ret
+}
+
+fn get_options(
+    options: Vec<UnwindPathPartOption>,
+    path: String,
+    global_index: Option<String>,
+    global_outer: bool,
+) -> Vec<UnwindOption> {
+    let mut ret = vec![UnwindOption::Path(string_to_path(path))];
+    let mut found_index = false;
+    let mut found_outer = false;
+    for option in options.into_iter() {
+        match option {
+            UnwindPathPartOption::Index(i) => {
+                ret.push(UnwindOption::Index(i));
+                found_index = true;
+            }
+            UnwindPathPartOption::Outer(o) => {
+                ret.push(UnwindOption::Outer(o));
+                found_outer = true;
+            }
+        }
+    }
+
+    if !found_index && global_index.is_some() {
+        // TODO: handle index renaming
+        ret.push(UnwindOption::Index(global_index.clone().unwrap()));
+    }
+    if !found_outer && global_outer {
+        ret.push(UnwindOption::Outer(global_outer));
+    }
+    ret
 }
 
 fn create_unwind_datasource(
@@ -75,33 +128,18 @@ fn create_unwind_datasource(
     if current_path.is_empty() {
         return create_unwind_datasource(source, paths, global_index, global_outer);
     }
-    let mut current_part = current_path.pop().unwrap();
-    let mut options = vec![UnwindOption::Path(Expression::Identifier(
-        current_part.field,
-    ))];
-    let mut found_index = false;
-    let mut found_outer = false;
-    // TODO: Handle nested arrays
-    for option in current_part.options.pop().unwrap().into_iter() {
-        match option {
-            UnwindPathPartOption::Index(i) => {
-                options.push(UnwindOption::Index(i));
-                found_index = true;
-            }
-            UnwindPathPartOption::Outer(o) => {
-                options.push(UnwindOption::Outer(o));
-                found_outer = true;
-            }
-        }
+    let mut current_part = current_path.remove(0);
+    if !current_path.is_empty() {
+        paths.push(current_path);
     }
-    if !found_index && global_index.is_some() {
-        // TODO: handle index renaming
-        options.push(UnwindOption::Index(global_index.clone().unwrap()));
-    }
-    if !found_outer && global_outer {
-        options.push(UnwindOption::Outer(global_outer));
-    }
-
+    //  TODO: handle nested arrays
+    let options = get_options(
+        current_part.options.pop().unwrap(),
+        // TEMP HACK
+        "a.b".to_string(),
+        global_index.clone(),
+        global_outer,
+    );
     create_unwind_datasource(
         Datasource::Unwind(UnwindSource {
             datasource: Box::new(source),
