@@ -56,7 +56,20 @@ impl Visitor for ExtendedUnwindRewriteVisitor {
                         options: Vec::new(),
                     });
                 }
-                create_unwind_datasource(*source, paths.unwrap(), global_index, global_outer)
+                let mut paths = paths.unwrap();
+                // if there is only one path and there are no local unwind options, this is an old
+                // style UnwindSource that we can immediately convert to a normal UnwindSource.
+                // In particular, this keeps us from prefixing the INDEX field with the path.
+                if paths.len() == 1 && paths[0].iter().all(|p| p.options.is_empty()) {
+                    create_simple_unwind_datasource(
+                        source,
+                        paths.remove(0),
+                        global_index,
+                        global_outer,
+                    )
+                } else {
+                    create_unwind_datasource(*source, paths, global_index, global_outer)
+                }
             }
             _ => data_source,
         }
@@ -118,6 +131,27 @@ fn get_options(
     }
     ret.push(UnwindOption::Path(path_vec_to_path(path)));
     ret
+}
+
+fn create_simple_unwind_datasource(
+    source: Box<Datasource>,
+    path: Vec<UnwindPathPart>,
+    global_index: Option<String>,
+    global_outer: bool,
+) -> Datasource {
+    let mut options = vec![UnwindOption::Path(path_vec_to_path(
+        path.iter().map(|p| p.field.clone()).collect(),
+    ))];
+    if global_index.is_some() {
+        options.push(UnwindOption::Index(global_index.unwrap()));
+    }
+    if global_outer {
+        options.push(UnwindOption::Outer(true));
+    }
+    ast::Datasource::Unwind(ast::UnwindSource {
+        datasource: source,
+        options,
+    })
 }
 
 // This simply loops over every path and calls create_unwind_datasource_for_path for each path
