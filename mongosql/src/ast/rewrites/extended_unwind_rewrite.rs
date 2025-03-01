@@ -63,6 +63,9 @@ impl Visitor for ExtendedUnwindRewriteVisitor {
     }
 }
 
+// This converts a vector of strings representing a path into a nested SubpathExpr.
+// Each element can be thought of as separated by `.` in the path. By representing it as a
+// Vec, we can not worry about parts that contain `.` in them.
 fn path_vec_to_path(mut path: Vec<String>) -> Expression {
     if path.len() == 1 {
         return Expression::Identifier(path.remove(0));
@@ -77,13 +80,15 @@ fn path_vec_to_path(mut path: Vec<String>) -> Expression {
     ret
 }
 
+// Get options takes the ParthPartOptions and the path and returns a vector of UnwindOptions for
+// normal UnwindSources.
 fn get_options(
     options: Vec<UnwindPathPartOption>,
     path: Vec<String>,
-    global_index: Option<String>,
+    global_index: Option<&String>,
     global_outer: bool,
 ) -> Vec<UnwindOption> {
-    let mut ret = vec![UnwindOption::Path(path_vec_to_path(path))];
+    let mut ret = Vec::new();
     let mut found_index = false;
     let mut found_outer = false;
     for option in options.into_iter() {
@@ -100,15 +105,25 @@ fn get_options(
     }
 
     if !found_index && global_index.is_some() {
-        // TODO: handle index renaming
-        ret.push(UnwindOption::Index(global_index.clone().unwrap()));
+        let prefix = path.join("_");
+        ret.push(UnwindOption::Index(format!(
+            "{}_{}",
+            prefix,
+            global_index.unwrap()
+        )));
     }
     if !found_outer && global_outer {
-        ret.push(UnwindOption::Outer(global_outer));
+        // there is no need to push Outer(false)
+        ret.push(UnwindOption::Outer(true));
     }
+    // By adding the path last, we can avoid a clone that would be necessary in order to handle
+    // the global_index, which may not even exist!
+    ret.push(UnwindOption::Path(path_vec_to_path(path)));
     ret
 }
 
+// This simply loops over every path and calls create_unwind_datasource_for_path for each path
+// to simplify the iteration.
 fn create_unwind_datasource(
     source: Datasource,
     paths: Vec<Vec<UnwindPathPart>>,
@@ -137,7 +152,12 @@ fn create_unwind_datasource_for_path(
             continue;
         }
         for options in path_part.options {
-            let options = get_options(options, subpath.clone(), global_index.clone(), global_outer);
+            let options = get_options(
+                options,
+                subpath.clone(),
+                global_index.as_ref(),
+                global_outer,
+            );
             ret = Datasource::Unwind(UnwindSource {
                 datasource: Box::new(ret),
                 options,
