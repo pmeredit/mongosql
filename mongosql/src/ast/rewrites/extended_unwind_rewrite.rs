@@ -85,6 +85,7 @@ fn path_vec_to_path(mut path: Vec<String>) -> Expression {
 fn get_options(
     options: Vec<UnwindPathPartOption>,
     path: Vec<String>,
+    index_prefix: &str,
     global_index: Option<&String>,
     global_outer: bool,
 ) -> Vec<UnwindOption> {
@@ -105,10 +106,9 @@ fn get_options(
     }
 
     if !found_index && global_index.is_some() {
-        let prefix = path.join("_");
         ret.push(UnwindOption::Index(format!(
             "{}_{}",
-            prefix,
+            index_prefix,
             global_index.unwrap()
         )));
     }
@@ -116,8 +116,6 @@ fn get_options(
         // there is no need to push Outer(false)
         ret.push(UnwindOption::Outer(true));
     }
-    // By adding the path last, we can avoid a clone that would be necessary in order to handle
-    // the global_index, which may not even exist!
     ret.push(UnwindOption::Path(path_vec_to_path(path)));
     ret
 }
@@ -151,10 +149,17 @@ fn create_unwind_datasource_for_path(
         if path_part.options.is_empty() {
             continue;
         }
-        for options in path_part.options {
+        let mut index_prefix = None;
+        for (i, options) in path_part.options.into_iter().enumerate() {
+            if let Some(ip) = index_prefix {
+                index_prefix = Some(format!("{}{}", ip, i - 1));
+            } else {
+                index_prefix = Some(subpath.join("_"));
+            }
             let options = get_options(
                 options,
                 subpath.clone(),
+                index_prefix.as_ref().unwrap(),
                 global_index.as_ref(),
                 global_outer,
             );
