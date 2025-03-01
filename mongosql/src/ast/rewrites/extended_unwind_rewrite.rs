@@ -143,7 +143,9 @@ fn create_unwind_datasource_for_path(
 ) -> Datasource {
     let mut ret = source;
     let mut subpath = Vec::new();
+    let mut last_path_part_missing_options = true;
     for path_part in path.into_iter() {
+        last_path_part_missing_options = path_part.options.is_empty();
         subpath.push(path_part.field);
         // if the options are empty, we are not unwinding at this point in the path
         if path_part.options.is_empty() {
@@ -168,6 +170,22 @@ fn create_unwind_datasource_for_path(
                 options,
             });
         }
+    }
+    // for backward compatibility, if the last path part has no options, we need to unwind it
+    // anyway. Even if the path part was specified as part[], the options will still consist of
+    // one empty vector, rather than being and empty vector, so we do not insert an extra unwind.
+    if last_path_part_missing_options {
+        let options = get_options(
+            Vec::new(),
+            subpath.clone(),
+            subpath.join("_").as_str(),
+            global_index.as_ref(),
+            global_outer,
+        );
+        ret = Datasource::Unwind(UnwindSource {
+            datasource: Box::new(ret),
+            options,
+        });
     }
     ret
 }
