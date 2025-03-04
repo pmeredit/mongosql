@@ -9,12 +9,25 @@ extern {
 }
 
 pub Query: Query = {
+  WithQuery => Query::Null,
+  SimpleQuery => <>,
+};
+
+SimpleQuery: Query = {
   SetQuery => Query::Set(<>),
   SelectQuery => Query::Select(<>),
-};
+}
+
+WithQuery: Query = {
+   WITH <t:CommaPlus<Temp>> <q2:SelectQuery> => Query::Null
+}
 
 SetQuery: SetQuery = {
   <q:Query> <o:SetOperator> <s:SelectQuery>  => SetQuery{left:Box::new(q), op:o, right:Box::new(Query::Select(s))},
+}
+
+Temp: Query = {
+  <i:Identifier> AS LEFT_PAREN <q:SimpleQuery> RIGHT_PAREN => Query::Null
 }
 
 SelectQuery: SelectQuery = {

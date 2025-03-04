@@ -148,6 +148,7 @@ impl PrettyPrint for Query {
         match self {
             Query::Select(q) => q.pretty_print(),
             Query::Set(q) => q.pretty_print(),
+            Query::Null => todo!(),
         }
     }
 }

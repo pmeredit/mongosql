@@ -21,6 +21,7 @@ visitgen::generate_visitors! {
 pub enum Query {
     Select(SelectQuery),
     Set(SetQuery),
+    Null,
 }
 
 #[derive(PartialEq, Debug, Clone)]
