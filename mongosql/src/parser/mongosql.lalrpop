@@ -19,7 +19,7 @@ SimpleQuery: Query = {
 }
 
 WithQuery: Query = {
-   WITH <t:CommaPlus<Temp>> <q2:SelectQuery> => Query::Null
+   WITH <t:CommaPlus<Temp>> LEFT_PAREN <q2:SimpleQuery> RIGHT_PAREN => Query::Null
 }
 
 SetQuery: SetQuery = {
