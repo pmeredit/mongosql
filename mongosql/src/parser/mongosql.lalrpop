@@ -82,16 +82,18 @@ JoinDatasource: Datasource = {
                 left: Box::new(d),
                 right: Box::new(njd),
                 condition: None,
+                is_natural: false,
             }
         )
     },
-    <d:Datasource> <jt:JoinType> JOIN <njd:NonJoinDatasource> <c:(ON <Expression>)?> => {
+    <d:Datasource> <n: (NATURAL)?> <jt:JoinType> JOIN <njd:NonJoinDatasource> <c:(ON <Expression>)?> => {
         Datasource::Join(
             JoinSource {
                 join_type: jt,
                 left: Box::new(d),
                 right: Box::new(njd),
                 condition: c,
+                is_natural: n.is_some(),
             }
         )
     },

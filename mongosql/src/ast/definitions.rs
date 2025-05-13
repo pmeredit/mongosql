@@ -147,7 +147,7 @@ impl Datasource {
             Datasource::Derived(DerivedSource { query: _, alias }) => {
                 self.check_alias(alias, aliases)?;
             }
-            Datasource::Join(JoinSource { join_type: _, left, right, condition: _ }) => {
+            Datasource::Join(JoinSource { join_type: _, left, right, condition: _, is_natural: _ }) => {
                 left.check_duplicate_aliases_aux(aliases)?;
                 right.check_duplicate_aliases_aux(aliases)?;
             }
@@ -224,6 +224,7 @@ pub struct JoinSource {
     pub left: Box<Datasource>,
     pub right: Box<Datasource>,
     pub condition: Option<Expression>,
+    pub is_natural: bool,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy, VariantCount)]
