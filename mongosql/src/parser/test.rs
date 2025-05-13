@@ -2193,7 +2193,8 @@ mod from {
                     collection: "bar".to_string(),
                     alias: None
                 })),
-                condition: None
+                condition: None,
+                is_natural: false
             })),
             where_clause: None,
             group_by_clause: None,
@@ -2224,7 +2225,8 @@ mod from {
                     collection: "bar".to_string(),
                     alias: None
                 })),
-                condition: None
+                condition: None,
+                is_natural: false
             })),
             where_clause: None,
             group_by_clause: None,
@@ -2255,7 +2257,8 @@ mod from {
                     collection: "bar".to_string(),
                     alias: None
                 })),
-                condition: None
+                condition: None,
+                is_natural: false
             })),
             where_clause: None,
             group_by_clause: None,
@@ -2286,7 +2289,8 @@ mod from {
                     collection: "bar".to_string(),
                     alias: None
                 })),
-                condition: None
+                condition: None,
+                is_natural: false
             })),
             where_clause: None,
             group_by_clause: None,
@@ -2317,7 +2321,8 @@ mod from {
                     collection: "bar".to_string(),
                     alias: None
                 })),
-                condition: None
+                condition: None,
+                is_natural: false
             })),
             where_clause: None,
             group_by_clause: None,
@@ -2350,14 +2355,16 @@ mod from {
                         collection: "bar".to_string(),
                         alias: None,
                     })),
-                    condition: None
+                    condition: None,
+                    is_natural: false
                 })),
                 right: Box::new(Datasource::Collection(CollectionSource {
                     database: None,
                     collection: "car".to_string(),
                     alias: None
                 })),
-                condition: None
+                condition: None,
+                is_natural: false
             })),
             where_clause: None,
             group_by_clause: None,
@@ -2404,11 +2411,6 @@ mod from {
         expected_error_tech_msg = "array datasources must have aliases",
         expected_error_code = 2000,
         input = "SELECT * FROM [{'a': 1}]"
-    );
-    parsable!(
-        natural_join_not_allowed,
-        expected = false,
-        input = "SELECT * FROM foo NATURAL JOIN bar"
     );
 }
 
@@ -3620,7 +3622,7 @@ mod unrecognized_token_suggestion {
     parsable!(
         nothing_close_to_recommend,
         expected = false,
-        expected_error_user_msg = "Unrecognized token `=>`, expected: `+`, `AND`, `AS`, `BETWEEN`, `,`, `||`, `CROSS`, ```, `\"`, `/`, `.`, `::`, `=`, `>`, `>=`, `ID`, `IN`, `INNER`, `IS`, `JOIN`, `LEFT`, `[`, `(`, `LIKE`, `<`, `<=`, `<>`, `NOT`, `NOT IN`, `NOT LIKE`, `OR`, `RIGHT`, `)`, `*`, `-`, `::!`, `WITH`",
+        expected_error_user_msg = "Unrecognized token `=>`, expected: `+`, `AND`, `AS`, `BETWEEN`, `,`, `||`, `CROSS`, ```, `\"`, `/`, `.`, `::`, `=`, `>`, `>=`, `ID`, `IN`, `INNER`, `IS`, `JOIN`, `LEFT`, `[`, `(`, `LIKE`, `<`, `<=`, `NATURAL`, `<>`, `NOT`, `NOT IN`, `NOT LIKE`, `OR`, `RIGHT`, `)`, `*`, `-`, `::!`, `WITH`",
         input = "select * from UNWIND(foo => foo)"
     );
 

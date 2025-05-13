@@ -342,7 +342,8 @@ test_algebrize!(
         join_type: ast::JoinType::Left,
         left: Box::new(AST_SOURCE_FOO.clone()),
         right: Box::new(AST_SOURCE_BAR.clone()),
-        condition: Some(ast::Expression::Literal(ast::Literal::Boolean(true)))
+        condition: Some(ast::Expression::Literal(ast::Literal::Boolean(true))),
+        is_natural: false
     })),
     catalog = catalog(vec![("test", "foo"), ("test", "bar")]),
 );
@@ -360,7 +361,8 @@ test_algebrize!(
         join_type: ast::JoinType::Right,
         left: Box::new(AST_SOURCE_FOO.clone()),
         right: Box::new(AST_SOURCE_BAR.clone()),
-        condition: Some(ast::Expression::Literal(ast::Literal::Boolean(true)))
+        condition: Some(ast::Expression::Literal(ast::Literal::Boolean(true))),
+        is_natural: false
     })),
     catalog = catalog(vec![("test", "foo"), ("test", "bar")]),
 );
@@ -373,7 +375,8 @@ test_algebrize!(
         join_type: ast::JoinType::Left,
         left: Box::new(AST_SOURCE_FOO.clone()),
         right: Box::new(AST_SOURCE_BAR.clone()),
-        condition: None
+        condition: None,
+        is_natural: false
     })),
     catalog = catalog(vec![("test", "foo"), ("test", "bar")]),
 );
@@ -386,7 +389,9 @@ test_algebrize!(
         join_type: ast::JoinType::Right,
         left: Box::new(AST_SOURCE_FOO.clone()),
         right: Box::new(AST_SOURCE_BAR.clone()),
-        condition: None
+        condition: None,
+
+        is_natural: false
     })),
     catalog = catalog(vec![("test", "foo"), ("test", "bar")]),
 );
@@ -404,7 +409,8 @@ test_algebrize!(
         join_type: ast::JoinType::Inner,
         left: Box::new(AST_SOURCE_FOO.clone()),
         right: Box::new(AST_SOURCE_BAR.clone()),
-        condition: None
+        condition: None,
+        is_natural: false
     })),
     catalog = catalog(vec![("test", "foo"), ("test", "bar")]),
 );
@@ -422,7 +428,9 @@ test_algebrize!(
         join_type: ast::JoinType::Cross,
         left: Box::new(AST_SOURCE_FOO.clone()),
         right: Box::new(AST_SOURCE_BAR.clone()),
-        condition: None
+        condition: None,
+
+        is_natural: false
     })),
     catalog = catalog(vec![("test", "foo"), ("test", "bar")]),
 );
@@ -444,7 +452,8 @@ test_algebrize!(
         join_type: ast::JoinType::Cross,
         left: Box::new(AST_SOURCE_FOO.clone()),
         right: Box::new(AST_SOURCE_BAR.clone()),
-        condition: Some(ast::Expression::Literal(ast::Literal::Integer(1)))
+        condition: Some(ast::Expression::Literal(ast::Literal::Integer(1))),
+        is_natural: false
     })),
     catalog = catalog(vec![("test", "foo"), ("test", "bar")]),
 );
@@ -473,6 +482,7 @@ test_algebrize!(
             alias: "bar".into(),
         })),
         condition: Some(ast::Expression::Identifier("x".into())),
+        is_natural: false
     })),
 );
 test_algebrize!(
@@ -495,6 +505,7 @@ test_algebrize!(
             alias: "bar".into(),
         })),
         condition: Some(ast::Expression::Literal(ast::Literal::Integer(42))),
+        is_natural: false
     })),
 );
 test_algebrize!(
@@ -719,6 +730,7 @@ test_algebrize!(
                 })
                 .into(),
                 condition: None,
+                is_natural: false
             })),
             where_clause: None,
             group_by_clause: None,
@@ -802,7 +814,8 @@ test_algebrize!(
             left: Box::new(ast::Expression::Identifier("a".to_string())),
             op: ast::BinaryOp::Comparison(ast::ComparisonOp::Eq),
             right: Box::new(ast::Expression::Identifier("b".to_string())),
-        }))
+        })),
+         is_natural: false
     })),
 );
 test_algebrize!(
@@ -864,6 +877,7 @@ test_algebrize!(
                 })
                 .into(),
                 condition: None,
+                is_natural: false
             })),
             where_clause: None,
             group_by_clause: None,

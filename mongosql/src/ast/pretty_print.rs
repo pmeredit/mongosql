@@ -392,7 +392,11 @@ impl PrettyPrint for JoinSource {
         Ok(format!(
             "{} {} JOIN {}{}",
             self.left.pretty_print()?,
-            self.join_type.pretty_print()?,
+            if self.is_natural {
+                format!("{} {}", "NATURAL", self.join_type.pretty_print()?)
+            } else {
+                self.join_type.pretty_print()?
+            },
             self.right.pretty_print()?,
             self.condition
                 .as_ref()

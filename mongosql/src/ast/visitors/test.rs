@@ -212,6 +212,7 @@ mod subpath_field_tests {
                         subpath: "f".to_string(),
                     },)),
                 },),),
+                is_natural: false
             },),),
             where_clause: None,
             group_by_clause: None,

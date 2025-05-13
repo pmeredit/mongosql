@@ -494,11 +494,13 @@ mod arbitrary {
                 4 => Datasource::ExtendedUnwind(ExtendedUnwindSource::arbitrary(g)),
                 _ => panic!("missing Datasource variant(s)"),
             });
+            let join_type = JoinType::arbitrary(g);
             Self {
-                join_type: JoinType::arbitrary(g),
+                join_type,
                 left: Box::new(Datasource::arbitrary(g)),
                 right: rhs,
                 condition: Option::arbitrary(g),
+                is_natural: bool::arbitrary(g) && join_type != JoinType::Cross,
             }
         }
     }
