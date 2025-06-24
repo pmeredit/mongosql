@@ -2036,6 +2036,11 @@ mod from {
         input = "SELECT * FROM foo JOIN bar AS bar"
     );
     parsable!(
+        natural_join_second_alias,
+        expected = true,
+        input = "SELECT * FROM foo NATURAL JOIN bar AS bar"
+    );
+    parsable!(
         two_inner_join_first_alias,
         expected = true,
         input = "SELECT * FROM foo AS foo INNER JOIN bar"
