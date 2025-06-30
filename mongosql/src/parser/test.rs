@@ -3666,7 +3666,7 @@ mod parameters {
                         having_clause: None,
                         order_by_clause: None,
                         limit: None,
-                        offset: None }).into(),
+                        offset: None }.into()).into(),
                         alias: "baz".to_string(),
                 })),
                  where_clause: Some(Expression::Binary(BinaryExpr {
@@ -3691,7 +3691,7 @@ mod parameters {
                     ]}),
                     limit: None,
                     offset: None,
-        }),
+        }.into()),
         input = "SELECT x + ?, z * ? FROM (SELECT q = ? FROM foo) baz WHERE a = ? GROUP BY b HAVING c = ? ORDER BY d",
     );
 }
