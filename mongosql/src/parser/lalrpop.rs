@@ -136,11 +136,13 @@ pub fn get_token<T: Into<String>>(input: T) -> String {
 }
 
 pub fn parse_query(input: &str) -> Result<ast::Query> {
-    Ok(QUERY_PARSER.parse(input)?)
+    let mut param_count = 0usize;
+    Ok(QUERY_PARSER.parse(&mut param_count, input)?)
 }
 
 #[cfg(test)]
 pub fn parse_expression(input: &str) -> Result<ast::Expression> {
-    let expr = EXPRESSION_PARSER.parse(input)?;
+    let mut param_count = 0usize;
+    let expr = EXPRESSION_PARSER.parse(&mut param_count, input)?;
     Ok(expr)
 }

@@ -928,6 +928,7 @@ pub enum Literal {
     Integer(i32),
     Long(i64),
     Double(f64),
+    Parameter(usize),
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy, VariantCount)]

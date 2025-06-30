@@ -1155,6 +1155,7 @@ impl PrettyPrint for Literal {
                     d
                 })
             }
+            Literal::Parameter(_p) => Ok("?".to_string()),
         }
     }
 }

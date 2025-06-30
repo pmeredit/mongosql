@@ -2,7 +2,7 @@ use crate::{ast::*, parser::util::*};
 use lalrpop_util::ParseError;
 use std::str::FromStr;
 
-grammar;
+grammar<'ast>(paramter_counter: &'ast mut usize);
 
 extern {
     type Error = String;
@@ -626,6 +626,10 @@ UnaryOp: UnaryOp = {
 Literal: Literal = {
   NULL => Literal::Null,
   Boolean => Literal::Boolean(<>),
+  PARAMETER => {
+    *paramter_counter += 1usize;
+    Literal::Parameter(*paramter_counter)
+  },
   Integer,
   Double,
 }
@@ -809,6 +813,7 @@ match {
   "*" => STAR,
   "-" => SUB,
   "::!" => TYPE_ASSERTION,
+  "?" => PARAMETER,
   r"(?i)aggregate" => AGGREGATE,
   r"(?i)all" => ALL,
   r"(?i)and" => AND,

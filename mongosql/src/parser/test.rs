@@ -3622,6 +3622,80 @@ mod get_token {
     }
 }
 
+mod parameters {
+    use crate::ast::*;
+ 
+    validate_ast!(
+        parameterized_query,
+        method = parse_query,
+        expected = Query::Select(SelectQuery {
+            select_clause: SelectClause {
+                set_quantifier: SetQuantifier::All,
+                body: SelectBody::Standard(vec![
+                    SelectExpression::Expression(OptionallyAliasedExpr::Unaliased(
+                            Expression::Binary(BinaryExpr {
+                                left: Expression::Identifier("x".to_string()).into(),
+                                op: BinaryOp::Add,
+                                right: Expression::Literal(Literal::Parameter(1)).into()}).into())),
+                    SelectExpression::Expression(OptionallyAliasedExpr::Unaliased(
+                            Expression::Binary(BinaryExpr {
+                                left: Expression::Identifier("z".to_string()).into(),
+                                op: BinaryOp::Mul,
+                                right: Expression::Literal(Literal::Parameter(2)).into() }))).into()])
+            },
+            from_clause: Some(
+                Datasource::Derived(
+                    DerivedSource { query: Query::Select(SelectQuery {
+                        select_clause: SelectClause {
+                            set_quantifier: SetQuantifier::All,
+                            body: SelectBody::Standard(vec![
+                                SelectExpression::Expression(
+                                    OptionallyAliasedExpr::Unaliased(
+                                        Expression::Binary(BinaryExpr {
+                                            left: Expression::Identifier("q".to_string()).into(),
+                                            op: BinaryOp::Comparison(ComparisonOp::Eq),
+                                            right: Expression::Literal(Literal::Parameter(3)).into() })))])
+                        },
+                        from_clause: Some(Datasource::Collection(CollectionSource {
+                            database: None,
+                            collection: "foo".to_string(),
+                            alias: None,
+                        })),
+                        where_clause: None,
+                        group_by_clause: None,
+                        having_clause: None,
+                        order_by_clause: None,
+                        limit: None,
+                        offset: None }).into(),
+                        alias: "baz".to_string(),
+                })),
+                 where_clause: Some(Expression::Binary(BinaryExpr {
+                        left: Expression::Identifier("a".to_string()).into(),
+                        op: BinaryOp::Comparison(ComparisonOp::Eq),
+                        right: Expression::Literal(Literal::Parameter(4)).into()
+                    })),
+                group_by_clause: Some(GroupByClause {
+                    keys: vec![OptionallyAliasedExpr::Unaliased(Expression::Identifier("b".to_string())).into()],
+                    aggregations: vec![] }),
+                having_clause: Some(Expression::Binary(BinaryExpr {
+                    left: Expression::Identifier("c".to_string()).into(),
+                    op: BinaryOp::Comparison(ComparisonOp::Eq),
+                    right: Expression::Literal(Literal::Parameter(5)).into()
+                })),
+                order_by_clause: Some(OrderByClause {
+                    sort_specs: vec![
+                        SortSpec {
+                            key: SortKey::Simple(Expression::Identifier("d".to_string())),
+                            direction: SortDirection::Asc
+                        }
+                    ]}),
+                    limit: None,
+                    offset: None,
+        }),
+        input = "SELECT x + ?, z * ? FROM (SELECT q = ? FROM foo) baz WHERE a = ? GROUP BY b HAVING c = ? ORDER BY d",
+    );
+}
+
 mod unrecognized_token_suggestion {
 
     parsable!(
