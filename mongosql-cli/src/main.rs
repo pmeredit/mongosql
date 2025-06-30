@@ -2,7 +2,7 @@ use agg_ast::definitions::Namespace;
 use bson::{doc, Document};
 use clap::Parser;
 use mongodb::sync::{Client, Collection};
-use mongosql::{build_catalog_from_catalog_schema, catalog::Catalog, json_schema::Schema};
+use mongosql::{ast::{self, pretty_print::PrettyPrint}, build_catalog_from_catalog_schema, catalog::Catalog, json_schema::Schema, substitute_paramters};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -40,9 +40,17 @@ struct Cli {
     #[arg(
         short,
         long,
-        help = "translation, automatically true if execute not set"
+        help = "Show the translation, automatically true if execute not set"
     )]
     translation: bool,
+    #[arg(
+        short,
+        long,
+        value_parser,
+        num_args = 1..,
+        value_delimiter = ',', 
+        help = "Substitute parameters in the query with the provided values. The values are positional and will be substituted in the order they are provided. Use 'null' for null values, 'true'/'false' for booleans, and numbers for numeric values.")]
+    substitute: Vec<String>,
     #[arg(short, long, help = "Run the query and display the result")]
     execute: bool,
     #[arg(
@@ -68,6 +76,27 @@ pub struct SchemaFile {
 fn main() -> Result<(), CliError> {
     let args = Cli::parse();
 
+    if !args.substitute.is_empty() {
+        let mut parameter_values: Vec<ast::Expression> = Vec::new();
+        let exp = |l| ast::Expression::Literal(l);
+        for arg in args.substitute.iter() {
+            if arg.to_lowercase() == "null" {
+                parameter_values.push(exp(ast::Literal::Null));
+            } else if let Ok(i) = arg.parse::<i64>() {
+                parameter_values.push(exp(ast::Literal::Long(i)));
+            } else if let Ok(i) = arg.parse::<f64>() {
+                parameter_values.push(exp(ast::Literal::Double(i)));
+            } else if let Ok(f) = arg.parse::<bool>() {
+                parameter_values.push(exp(ast::Literal::Boolean(f)));
+            } else {
+                parameter_values.push(ast::Expression::StringConstructor(arg.to_string()));
+            }
+        }
+        let query = substitute_paramters(args.query.as_str(), &parameter_values)?;
+        let query_str = query.pretty_print()?;
+        println!("Substituted query: {query_str}");
+        return Ok(());
+    }
     let uri = args.uri.unwrap_or("mongodb://localhost:27017".to_string());
     let current_db = args.db.unwrap_or("test".to_string());
     let query = args.query;

@@ -146,6 +146,16 @@ pub fn get_namespaces(
     Ok(namespaces)
 }
 
+pub fn substitute_paramters(
+    sql: &str,
+    arguments: &[ast::Expression],
+) -> Result<ast::Query> {
+    use ast::rewrites::Pass;
+    let ast = parser::parse_query(sql)?;
+    let pass = ast::rewrites::SubstituteParametersRewritePass::new(arguments);
+    Ok(pass.apply(ast)?)
+}
+
 // get_select_order uses pattern matching to parse the select body from the rewritten AST.
 // Parses both distinct and non-distinct SelectQuery
 pub fn get_select_order(ast: &ast::Query) -> Option<ast::SelectBody> {

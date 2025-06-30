@@ -2,7 +2,7 @@ use crate::{ast::*, parser::util::*};
 use lalrpop_util::ParseError;
 use std::str::FromStr;
 
-grammar<'ast>(paramter_counter: &'ast mut usize);
+grammar<'ast>(parameter_counter: &'ast mut usize);
 
 extern {
     type Error = String;
@@ -566,6 +566,11 @@ BottomExpr: Box<Expression> = {
   Identifier => Box::new(Expression::Identifier(<>)),
   Literal => Box::new(Expression::Literal(<>)),
   StringConstructor => Box::new(Expression::StringConstructor(<>)),
+  PARAMETER => {
+    let count = *parameter_counter;
+    *parameter_counter += 1usize;
+    Box::new(Expression::Parameter(count))
+  },
   SubqueryExpr => Box::new(Expression::Subquery(<>)),
   Tuple => Box::new(<>),
   FunctionEscape => Box::new(<>),
@@ -626,10 +631,6 @@ UnaryOp: UnaryOp = {
 Literal: Literal = {
   NULL => Literal::Null,
   Boolean => Literal::Boolean(<>),
-  PARAMETER => {
-    *paramter_counter += 1usize;
-    Literal::Parameter(*paramter_counter)
-  },
   Integer,
   Double,
 }

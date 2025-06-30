@@ -1381,6 +1381,12 @@ impl<'a> Algebrizer<'a> {
             ast::Expression::Subquery(s) => self.algebrize_subquery(*s),
             ast::Expression::SubqueryComparison(s) => self.algebrize_subquery_comparison(s),
             ast::Expression::Exists(e) => self.algebrize_exists(*e),
+            ast::Expression::Parameter(_) => {
+                // Parameters are not supported in the algebraizer, so we panic.
+                // This should never happen because parameters should be rewritten away before
+                // reaching the algebrizer.
+                panic!("parameters should have been rewritten away before algebrizing");
+            }
         }
     }
 
@@ -1391,12 +1397,6 @@ impl<'a> Algebrizer<'a> {
             ast::Literal::Integer(i) => mir::LiteralValue::Integer(i),
             ast::Literal::Long(l) => mir::LiteralValue::Long(l),
             ast::Literal::Double(d) => mir::LiteralValue::Double(d),
-            ast::Literal::Parameter(_) => {
-                // Parameters are not supported in the algebraizer, so we panic.
-                // This should never happen because parameters should be rewritten away before
-                // reaching the algebrizer.
-                panic!("parameters should have been rewritten away before algebrizing");
-            }
         }
     }
 

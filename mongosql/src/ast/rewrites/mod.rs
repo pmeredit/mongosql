@@ -1,6 +1,8 @@
 use crate::ast;
 use thiserror::Error;
 
+mod substitute_parameters;
+pub use substitute_parameters::SubstituteParametersRewritePass;
 mod alias;
 pub use alias::AddAliasRewritePass;
 mod extended_unwind_rewrite;
@@ -65,6 +67,8 @@ pub enum Error {
     UnwindSourceWithoutPath,
     #[error("duplicate option in UNWIND: {0}")]
     DuplicateOptionInUnwind(&'static str),
+    #[error("parameter index {0} is out of bounds")]
+    ParameterIndexOutOfBounds(usize),
 }
 
 /// A fallible transformation that can be applied to a query

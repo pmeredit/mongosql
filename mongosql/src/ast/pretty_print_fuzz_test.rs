@@ -604,7 +604,9 @@ mod arbitrary {
             }
 
             let nested_g = &mut nested_gen(g);
-            let rng = &(0..Self::VARIANT_COUNT).collect::<Vec<_>>();
+            // Omitting the Paramter variant because the fuzz tester cannot
+            // properly generate the count for it.
+            let rng = &(0..Self::VARIANT_COUNT-1).collect::<Vec<_>>();
             match g.choose(rng).unwrap() {
                 0 => Self::Binary(BinaryExpr::arbitrary(nested_g)),
                 1 => Self::Unary(UnaryExpr::arbitrary(nested_g)),
@@ -1143,9 +1145,7 @@ mod arbitrary {
 
     impl Arbitrary for Literal {
         fn arbitrary(g: &mut Gen) -> Self {
-            // Intially omitting the Paramter variant because the fuzz tester cannot
-            // properly generate the count for it.
-            let rng = &(0..Self::VARIANT_COUNT-1).collect::<Vec<_>>();
+            let rng = &(0..Self::VARIANT_COUNT).collect::<Vec<_>>();
             match g.choose(rng).unwrap() {
                 0 => Self::Null,
                 1 => Self::Boolean(bool::arbitrary(g)),

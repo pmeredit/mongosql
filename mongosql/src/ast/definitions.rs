@@ -300,6 +300,7 @@ pub enum Expression {
     Like(LikeExpr),
     Literal(Literal),
     StringConstructor(String),
+    Parameter(usize),
     Tuple(Vec<Expression>),
     TypeAssertion(TypeAssertionExpr),
 }
@@ -928,7 +929,6 @@ pub enum Literal {
     Integer(i32),
     Long(i64),
     Double(f64),
-    Parameter(usize),
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy, VariantCount)]

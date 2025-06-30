@@ -746,7 +746,7 @@ impl Expression {
             // wrap arguments in parentheses
             Array(_) | Case(_) | Cast(_) | Document(_) | Exists(_) | Function(_) | Trim(_)
             | DateFunction(_) | Extract(_) | Identifier(_) | Literal(_) | StringConstructor(_)
-            | Subquery(_) | Tuple(_) => Bottom,
+            | Subquery(_) | Tuple(_) | Parameter(_) => Bottom,
         }
     }
 }
@@ -774,6 +774,7 @@ impl PrettyPrint for Expression {
             Cast(c) => c.pretty_print(),
             Literal(l) => l.pretty_print(),
             StringConstructor(s) => Ok(format!("'{}'", escape_string_literal(s))),
+            Parameter(_p) => Ok("?".to_string()),
             Unary(u) => u.pretty_print(),
             Binary(b) => b.pretty_print(),
             Extract(e) => e.pretty_print(),
@@ -1155,7 +1156,6 @@ impl PrettyPrint for Literal {
                     d
                 })
             }
-            Literal::Parameter(_p) => Ok("?".to_string()),
         }
     }
 }
