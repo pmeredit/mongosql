@@ -5,6 +5,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {
+    #[error("bad parameter value: {0:?}")]
+    BadParameterValue(String),
     #[error("parse error: {0}")]
     Parse(#[from] parser::Error),
     #[error("rewrite error: {0}")]

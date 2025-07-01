@@ -2,7 +2,7 @@ use agg_ast::definitions::Namespace;
 use bson::{doc, Document};
 use clap::Parser;
 use mongodb::sync::{Client, Collection};
-use mongosql::{ast::{self, pretty_print::PrettyPrint}, build_catalog_from_catalog_schema, catalog::Catalog, json_schema::Schema, substitute_paramters};
+use mongosql::{ast::{self, pretty_print::PrettyPrint}, build_catalog_from_catalog_schema, catalog::Catalog, json_schema::Schema, substitute_parameters};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -92,7 +92,7 @@ fn main() -> Result<(), CliError> {
                 parameter_values.push(ast::Expression::StringConstructor(arg.to_string()));
             }
         }
-        let query = substitute_paramters(args.query.as_str(), &parameter_values)?;
+        let query = substitute_parameters(args.query.as_str(), &parameter_values)?;
         let query_str = query.pretty_print()?;
         println!("Substituted query: {query_str}");
         return Ok(());

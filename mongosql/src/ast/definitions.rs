@@ -1,4 +1,6 @@
 use variant_count::VariantCount;
+use std::convert::TryFrom;
+use bson::Bson;
 
 #[macro_export]
 macro_rules! multimap {
@@ -303,6 +305,21 @@ pub enum Expression {
     Parameter(usize),
     Tuple(Vec<Expression>),
     TypeAssertion(TypeAssertionExpr),
+}
+
+impl TryFrom<Bson> for Expression {
+    type Error = String;
+    fn try_from(bson: Bson) -> Result<Self, Self::Error> {
+        match bson {
+            Bson::Int32(i) => Ok(Expression::Literal(Literal::Integer(i))),
+            Bson::Int64(i) => Ok(Expression::Literal(Literal::Long(i))),
+            Bson::Double(d) => Ok(Expression::Literal(Literal::Double(d))),
+            Bson::Boolean(b) => Ok(Expression::Literal(Literal::Boolean(b))),
+            Bson::String(s) => Ok(Expression::StringConstructor(s)),
+            Bson::Null => Ok(Expression::Literal(Literal::Null)),
+            _ => Err(format!("BSON value {bson:?} cannot be converted to a MongoSQL AST expression")),
+        }
+    }
 }
 
 impl Expression {

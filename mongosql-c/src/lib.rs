@@ -1,9 +1,7 @@
 use base64::Engine;
 use lazy_static::lazy_static;
 use mongosql::{
-    build_catalog_from_base_64,
-    options::{ExcludeNamespacesOption, SqlOptions},
-    SchemaCheckingMode,
+    ast::pretty_print::PrettyPrint, build_catalog_from_base_64, options::{ExcludeNamespacesOption, SqlOptions}, SchemaCheckingMode
 };
 use std::{
     collections::BTreeSet,
@@ -55,6 +53,38 @@ pub extern "C" fn translate(
         Box::new(translation_success_payload),
         Box::new(translation_failure_payload),
     )
+}
+
+/// Safely substitutes arguments into parameters. This will not allow
+/// for SQL injection attacks, as parameters are substituted into the AST post parsing.
+/// We return the SQL as a string, which is somewhat wasteful since it will just be parsed again,
+/// but this is the simplest way to do it for now. The first argument is the SQL query string,
+/// the second argument is an array of BSON-encoded arguments, which are sent as a base64-encoded string.
+#[no_mangle]
+pub extern "C" fn substitute_parameters(
+    sql: *const libc::c_char,
+    arguments: *const raw::c_char,
+) -> *const raw::c_char {
+    panic_safe_exec(
+        || substitute_parameters_helper(sql, arguments),
+        Box::new(|s| s),
+        Box::new(translation_failure_payload),
+    )
+}
+
+fn substitute_parameters_helper(
+    sql: *const libc::c_char,
+    arguments: *const raw::c_char,
+) -> Result<String, String> {
+    let sql = from_extern_string(sql).map_err(|_| "sql query string not valid UTF-8".to_string())?;
+    let arguments = base64_string_to_bson_array(arguments)
+        .map_err(|e| format!("failed to decode arguments: {e}"))?;
+
+    mongosql::substitute_bson_into_parameters(&sql, &arguments)
+        .map(|ast| ast.pretty_print().unwrap_or_else(
+            |e| format!("failed to pretty print AST: {e}"),
+        ))
+        .map_err(|e| format!("failed to substitute parameters: {e}"))
 }
 
 /// A helper function that encapsulates all the fallible parts of
@@ -121,6 +151,16 @@ fn translation_success_payload(t: mongosql::Translation) -> String {
 
     base64::engine::general_purpose::STANDARD
         .encode(bson::to_vec(&translation).expect("serializing bson to bytes failed"))
+}
+
+/// Convert a base64 encoded C string to a Bson Array
+fn base64_string_to_bson_array(
+    base64_string: *const raw::c_char,
+) -> Result<bson::Array, String> {
+    let c_str = unsafe { CStr::from_ptr(base64_string) };
+    let bytes = c_str.to_bytes();
+    let decoded = base64::engine::general_purpose::STANDARD.decode(bytes).map_err(|e| e.to_string())?;
+    bson::from_slice(&decoded).map_err(|e| e.to_string())
 }
 
 /// ErrorVisibility describes whether an error is "internal" or

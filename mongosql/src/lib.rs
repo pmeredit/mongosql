@@ -146,7 +146,7 @@ pub fn get_namespaces(
     Ok(namespaces)
 }
 
-pub fn substitute_paramters(
+pub fn substitute_parameters(
     sql: &str,
     arguments: &[ast::Expression],
 ) -> Result<ast::Query> {
@@ -154,6 +154,24 @@ pub fn substitute_paramters(
     let ast = parser::parse_query(sql)?;
     let pass = ast::rewrites::SubstituteParametersRewritePass::new(arguments);
     Ok(pass.apply(ast)?)
+}
+
+pub fn substitute_bson_into_parameters(
+    sql: &str,
+    arguments: &bson::Array,
+) -> Result<ast::Query> {
+    let expressions = arguments
+        .iter()
+        .map(|bson| 
+            ast::Expression::try_from(bson.clone())
+            .map_err(|e| {
+                result::Error::BadParameterValue(format!(
+                    "failed to convert BSON to MongoSQL AST Expression, which is required for paramter substitution: {e}"
+                ))
+            })
+        )
+        .collect::<Result<Vec<_>>>()?;
+    substitute_parameters(sql, &expressions)
 }
 
 // get_select_order uses pattern matching to parse the select body from the rewritten AST.
