@@ -19,7 +19,7 @@ tests:
                     "pipeline":
                       [
                         {
-                          "$join":
+                          "$fullJoin":
                             {
                               "collection": "baz",
                               "joinType": "inner",
@@ -94,7 +94,7 @@ tests:
   - name: "inner join with variable reference in $sql null semantic operator"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "coll",
             "joinType": "inner",
@@ -191,7 +191,7 @@ tests:
                     "pipeline":
                       [
                         {
-                          "$join":
+                          "$fullJoin":
                             {
                               "collection": "baz",
                               "joinType": "inner",
@@ -209,7 +209,7 @@ tests:
                                                 "pipeline":
                                                   [
                                                     {
-                                                      "$join":
+                                                      "$fullJoin":
                                                         {
                                                           "collection": "caz",
                                                           "joinType": "inner",
@@ -357,7 +357,7 @@ tests:
   - name: "group nested in join pipeline"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
@@ -467,7 +467,7 @@ tests:
   - name: "subquery nested in join pipeline"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
@@ -550,7 +550,7 @@ tests:
   - name: "subquery nested in join match condition"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
@@ -625,7 +625,7 @@ tests:
   - name: "subquery nested in join let"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
@@ -893,7 +893,7 @@ tests:
   - name: "unsupported ops nested in join"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
@@ -1210,7 +1210,7 @@ tests:
   - name: "null semantic ops nested in join"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
@@ -1592,7 +1592,7 @@ tests:
                     "pipeline":
                       [
                         {
-                          "$join":
+                          "$fullJoin":
                             {
                               "collection": "baz",
                               "joinType": "inner",

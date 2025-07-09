@@ -8,7 +8,7 @@ tests:
   - name: "desugar inner join"
     input:
       - {
-        "$join": { "collection": "bar", "joinType": "inner", "pipeline": [] },
+        "$fullJoin": { "collection": "bar", "joinType": "inner", "pipeline": [] },
       }
     expected:
       - {
@@ -58,7 +58,7 @@ tests:
 
   - name: "desugar left join"
     input:
-      - { "$join": { "collection": "bar", "joinType": "left", "pipeline": [] } }
+      - { "$fullJoin": { "collection": "bar", "joinType": "left", "pipeline": [] } }
     expected:
       - {
         "$lookup":
@@ -108,7 +108,7 @@ tests:
   - name: "desugar join with db specified"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "database": "db",
             "collection": "bar",
@@ -175,7 +175,7 @@ tests:
   - name: "desugar join with no collection and non-empty pipeline"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "joinType": "inner",
             "pipeline":
@@ -210,7 +210,7 @@ tests:
   - name: "desugar join non-empty let and match"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
@@ -253,7 +253,7 @@ tests:
     input:
       - { "$project": { "_id": 0, "foo": "$$ROOT" } }
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
@@ -329,7 +329,7 @@ tests:
     input:
       - { "$project": { "_id": 0, "foo": "$$ROOT" } }
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
@@ -349,7 +349,7 @@ tests:
           },
       }
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "baz",
             "joinType": "inner",
@@ -436,21 +436,21 @@ tests:
   - name: "nested join"
     input:
       - {
-        "$join":
+        "$fullJoin":
           {
             "collection": "bar",
             "joinType": "inner",
             "pipeline":
               [
                 {
-                  "$join":
+                  "$fullJoin":
                     {
                       "collection": "baz",
                       "joinType": "inner",
                       "pipeline":
                         [
                           {
-                            "$join":
+                            "$fullJoin":
                               {
                                 "collection": "car",
                                 "joinType": "inner",

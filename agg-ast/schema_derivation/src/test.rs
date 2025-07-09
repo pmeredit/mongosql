@@ -424,7 +424,7 @@ mod get_namespaces_for_pipeline {
             Namespace::new("test".to_string(), "foo".to_string()),
             Namespace::new("test".to_string(), "bar".to_string()),
         ),
-        input = r#"[{ "$join": { "collection": "bar", "joinType": "left", "pipeline": [] } }]"#
+        input = r#"[{ "$fullJoin": { "collection": "bar", "joinType": "left", "pipeline": [] } }]"#
     );
 
     test_get_namespaces_for_pipeline!(

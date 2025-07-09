@@ -43,7 +43,7 @@ pub enum Stage {
     SortByCount(Box<Expression>),
     #[serde(rename = "$group")]
     Group(Group),
-    #[serde(rename = "$join")]
+    #[serde(rename = "$fullJoin")]
     Join(Box<Join>),
     #[serde(rename = "$equiJoin")]
     EquiJoin(EquiJoin),

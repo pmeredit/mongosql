@@ -767,7 +767,7 @@ mod stage_test {
                 condition: None
             })),
             input =
-                r#"stage: {"$join": {"collection": "bar", "joinType": "inner", "pipeline": [] }}"#
+                r#"stage: {"$fullJoin": {"collection": "bar", "joinType": "inner", "pipeline": [] }}"#
         );
 
         test_serde_stage!(
@@ -780,7 +780,7 @@ mod stage_test {
                 pipeline: vec![],
                 condition: None
             })),
-            input = r#"stage: { "$join":
+            input = r#"stage: { "$fullJoin":
                   {
                     "database": "db",
                     "collection": "bar",
@@ -805,7 +805,7 @@ mod stage_test {
                 condition: None
             })),
             input = r#"stage: {
-                "$join":
+                "$fullJoin":
                   {
                     "joinType": "inner",
                     "pipeline":
@@ -838,7 +838,7 @@ mod stage_test {
                 })),
             })),
             input = r#"stage: {
-                "$join":
+                "$fullJoin":
                   {
                     "collection": "bar",
                     "joinType": "inner",
@@ -875,21 +875,21 @@ mod stage_test {
                 condition: None
             })),
             input = r#"stage: {
-                "$join":
+                "$fullJoin":
                   {
                     "collection": "bar",
                     "joinType": "inner",
                     "pipeline":
                       [
                         {
-                          "$join":
+                          "$fullJoin":
                             {
                               "collection": "baz",
                               "joinType": "inner",
                               "pipeline":
                                 [
                                   {
-                                    "$join":
+                                    "$fullJoin":
                                       {
                                         "collection": "car",
                                         "joinType": "inner",
