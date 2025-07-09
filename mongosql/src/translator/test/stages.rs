@@ -671,6 +671,7 @@ mod join {
             condition: None
         })),
         input = mir::Stage::Join(mir::Join {
+            is_natural: false,
             join_type: mir::JoinType::Inner,
             left: util::mir_collection("test_db", "foo"),
             right: util::mir_collection("test_db", "bar"),
@@ -700,6 +701,7 @@ mod join {
             ))
         })),
         input = mir::Stage::Join(mir::Join {
+            is_natural: false,
             join_type: mir::JoinType::Left,
             left: util::mir_collection("test_db", "foo"),
             right: util::mir_collection("test_db", "bar"),
@@ -741,8 +743,10 @@ mod join {
             condition: Some(air::Expression::Literal(air::LiteralValue::Boolean(true))),
         })),
         input = mir::Stage::Join(mir::Join {
+            is_natural: false,
             condition: Some(mir::Expression::Literal(mir::LiteralValue::Boolean(true))),
             left: mir::Stage::Join(mir::Join {
+            is_natural: false,
                 condition: None,
                 left: util::mir_project_collection(None, "Foo", None, None),
                 right: util::mir_project_collection(None, "foo", None, None),
@@ -769,6 +773,7 @@ mod join {
             join_type: air::JoinType::Left,
         })),
         input = mir::Stage::Join(mir::Join {
+            is_natural: false,
             condition: None,
             left: util::mir_collection("mydb", "col"),
             right: mir::Stage::Array(mir::ArraySource {
@@ -814,6 +819,7 @@ mod join {
         input = mir::Stage::Project(mir::Project {
             is_add_fields: false,
             source: Box::new(mir::Stage::Join(mir::Join {
+            is_natural: false,
                 join_type: mir::JoinType::Inner,
                 left: util::mir_project_collection(None, "foo", Some("t1"), None),
                 right: util::mir_project_collection(None, "bar", Some("t2"), None),
@@ -862,8 +868,10 @@ mod join {
             condition: Some(air::Expression::Literal(air::LiteralValue::Boolean(true))),
         })),
         input = mir::Stage::Join(mir::Join {
+            is_natural: false,
             condition: Some(mir::Expression::Literal(mir::LiteralValue::Boolean(true))),
             left: mir::Stage::Join(mir::Join {
+            is_natural: false,
                 condition: None,
                 left: util::mir_project_collection(None, "foo", Some("Foo"), None),
                 right: util::mir_project_collection(None, "bar", Some("_bar"), None),
@@ -1363,12 +1371,16 @@ mod translate_plan {
             }))
         })),
         input = mir::Stage::Join(mir::Join {
+            is_natural: false,
             join_type: mir::JoinType::Inner,
             left: Box::new(mir::Stage::Join(mir::Join {
+            is_natural: false,
                 join_type: mir::JoinType::Inner,
                 left: Box::new(mir::Stage::Join(mir::Join {
+            is_natural: false,
                     join_type: mir::JoinType::Inner,
                     left: Box::new(mir::Stage::Join(mir::Join {
+            is_natural: false,
                         join_type: mir::JoinType::Inner,
                         left: util::mir_project_collection(None, "$foo", None, None),
                         right: util::mir_project_collection(None, "bar.baz", None, None),
@@ -1430,8 +1442,10 @@ mod translate_plan {
             ))
         })),
         input = mir::Stage::Join(mir::Join {
+            is_natural: false,
             join_type: mir::JoinType::Inner,
             left: Box::new(mir::Stage::Join(mir::Join {
+            is_natural: false,
                 join_type: mir::JoinType::Inner,
                 left: util::mir_project_collection(None, "foo", None, None),
                 right: util::mir_project_collection(None, "bar", None, None),

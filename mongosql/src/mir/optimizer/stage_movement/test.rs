@@ -780,6 +780,7 @@ test_move_stage!(
     move_filter_right_above_join_and_projects,
     expected = Stage::Limit(Limit {
         source: Stage::Join( Join {
+            is_natural: false,
             left: Stage::Project(Project {
                             is_add_fields: false,
                 source: mir_collection("foo", "bar"),
@@ -837,8 +838,9 @@ test_move_stage!(
     input = Stage::Limit(Limit {
         source: Stage::Filter(Filter {
             source: Stage::Join( Join {
+            is_natural: false,
                 left: Stage::Project(Project {
-                            is_add_fields: false,
+                    is_add_fields: false,
                     source: mir_collection("foo", "bar"),
                     expression: BindingTuple(map! {
                         // In any real query, "bar" will be bound to a Document, but we just use a
@@ -852,7 +854,7 @@ test_move_stage!(
                     cache: SchemaCache::new(),
                 }).into(),
                 right: Stage::Project(Project {
-                            is_add_fields: false,
+                    is_add_fields: false,
                     source: mir_collection("foo", "bar2"),
                     expression: BindingTuple(map! {
                         // In any real query, "bar" will be bound to a Document, but we just use a
@@ -890,6 +892,7 @@ test_move_stage!(
 test_move_stage!(
     move_filter_under_join_into_none_on,
     expected = Stage::Join(Join {
+        is_natural: false,
         left: mir_collection("foo", "bar"),
         right: mir_collection("foo", "bar2"),
         condition: Some(Expression::ScalarFunction(mir::ScalarFunctionApplication {
@@ -906,6 +909,7 @@ test_move_stage!(
     expected_changed = true,
     input = Stage::Filter(Filter {
         source: Stage::Join(Join {
+            is_natural: false,
             left: mir_collection("foo", "bar"),
             right: mir_collection("foo", "bar2"),
             condition: None,
@@ -928,6 +932,7 @@ test_move_stage_no_op!(
     do_not_move_filter_under_left_join_into_on_when_filter_uses_rhs,
     Stage::Filter(Filter {
         source: Stage::Join(Join {
+            is_natural: false,
             left: mir_collection("foo", "bar"),
             right: mir_collection("foo", "bar2"),
             condition: None,
@@ -949,6 +954,7 @@ test_move_stage_no_op!(
 test_move_stage!(
     move_filter_under_left_join_into_lhs_when_filter_does_not_use_rhs,
     expected = Stage::Join(Join {
+            is_natural: false,
         left: Stage::Filter(Filter {
             source: mir_collection("foo", "bar"),
             condition: Expression::ScalarFunction(mir::ScalarFunctionApplication {
@@ -970,6 +976,7 @@ test_move_stage!(
     expected_changed = true,
     input = Stage::Filter(Filter {
         source: Stage::Join(Join {
+            is_natural: false,
             left: mir_collection("foo", "bar"),
             right: mir_collection("foo", "bar2"),
             condition: None,
@@ -991,6 +998,7 @@ test_move_stage!(
 test_move_stage!(
     move_filter_under_join_into_some_on,
     expected = Stage::Join(Join {
+            is_natural: false,
         left: mir_collection("foo", "bar"),
         right: mir_collection("foo", "bar2"),
         condition: Some(Expression::ScalarFunction(mir::ScalarFunctionApplication {
@@ -1014,6 +1022,7 @@ test_move_stage!(
     expected_changed = true,
     input = Stage::Filter(Filter {
         source: Stage::Join(Join {
+            is_natural: false,
             left: mir_collection("foo", "bar"),
             right: mir_collection("foo", "bar2"),
             condition: Some(mir::Expression::Literal(mir::LiteralValue::Integer(42))),
@@ -1037,8 +1046,9 @@ test_move_stage!(
     move_filter_left_above_join_and_projects,
     expected = Stage::Limit(Limit {
         source: Stage::Join( Join {
+            is_natural: false,
             left: Stage::Project(Project {
-                            is_add_fields: false,
+                is_add_fields: false,
                 source: Stage::Filter(Filter {
                     source: mir_collection("foo", "bar"),
                     condition: Expression::ScalarFunction(
@@ -1095,6 +1105,7 @@ test_move_stage!(
     input = Stage::Limit(Limit {
         source: Stage::Filter(Filter {
             source: Stage::Join( Join {
+                is_natural: false,
                 left: Stage::Project(Project {
                             is_add_fields: false,
                     source: mir_collection("foo", "bar"),
@@ -1421,6 +1432,7 @@ test_move_stage!(
 test_move_stage!(
     move_two_filters_under_join_one_into_none_on_and_other_filter_above_join_because_filters_can_reorder,
     expected = Stage::Join(Join {
+            is_natural: false,
         left: Stage::Filter(Filter {
             source: mir_collection("foo", "bar"),
             condition: Expression::ScalarFunction(mir::ScalarFunctionApplication::new(
@@ -1449,6 +1461,7 @@ test_move_stage!(
     input = Stage::Filter(Filter {
         source: Stage::Filter(Filter {
             source: Stage::Join(Join {
+            is_natural: false,
                 left: mir_collection("foo", "bar"),
                 right: mir_collection("foo", "bar2"),
                 condition: None,
@@ -1646,6 +1659,7 @@ test_move_stage_no_op!(
 test_move_stage!(
     move_sort_above_join,
     expected = Stage::Join(Join {
+            is_natural: false,
         join_type: JoinType::Inner,
         left: Box::new(Stage::Sort(Sort {
             source: mir_collection("foo", "bar"),
@@ -1659,6 +1673,7 @@ test_move_stage!(
     expected_changed = true,
     input = Stage::Sort(Sort {
         source: Box::new(Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Inner,
             left: mir_collection("foo", "bar"),
             right: mir_collection("foo", "bar2"),
@@ -1674,6 +1689,7 @@ test_move_stage_no_op!(
     cannot_move_sort_above_right_side_of_join,
     Stage::Sort(Sort {
         source: Box::new(Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Inner,
             left: mir_collection("foo", "bar2"),
             right: mir_collection("foo", "bar"),

@@ -780,6 +780,7 @@ mod index_does_not_conflict {
         }),
         input = Stage::Unwind(Unwind {
             source: Box::new(Stage::Join(Join {
+                is_natural: false,
                 join_type: JoinType::Inner,
                 left: Box::new(Stage::Collection(Collection {
                     db: "test".into(),

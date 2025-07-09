@@ -86,6 +86,7 @@ macro_rules! test_determine_join_semantics_no_op {
 
 fn make_standard_join(condition: Option<Expression>) -> Stage {
     Stage::Join(Join {
+        is_natural: false,
         join_type: JoinType::Inner,
         left: mir_project_collection(None, "local", None, None),
         right: mir_project_collection(None, "foreign", None, None),
@@ -107,6 +108,7 @@ mod do_not_change {
     test_determine_join_semantics_no_op!(
         right_not_collection,
         Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Inner,
             left: mir_project_collection(None, "local", None, None),
             right: Box::new(Stage::Array(ArraySource {

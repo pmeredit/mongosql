@@ -43,6 +43,7 @@ macro_rules! test_lower_joins_no_op {
 test_lower_joins_no_op!(
     do_not_rewrite_if_no_condition,
     Stage::Join(Join {
+            is_natural: false,
         join_type: JoinType::Inner,
         left: mir_project_collection(None, "foo", None, None),
         right: mir_project_collection(None, "bar", None, None),
@@ -72,6 +73,7 @@ test_lower_joins!(
     })),
     expected_changed = true,
     input = Stage::Join(Join {
+            is_natural: false,
         join_type: JoinType::Inner,
         left: mir_project_collection(None, "foo", None, None),
         right: mir_project_collection(None, "bar", None, None),
