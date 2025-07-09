@@ -988,6 +988,7 @@ impl DeriveSchema for Stage {
         }
 
         match self {
+            Stage::BabelJoin(_) => todo!(),
             Stage::AddFields(a) => add_fields_derive_schema(a, state),
             Stage::AtlasSearchStage(a) => match a {
                 AtlasSearchStage::Search(_) | AtlasSearchStage::VectorSearch(_) => {

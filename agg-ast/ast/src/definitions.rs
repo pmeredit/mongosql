@@ -43,6 +43,8 @@ pub enum Stage {
     SortByCount(Box<Expression>),
     #[serde(rename = "$group")]
     Group(Group),
+    #[serde(rename = "$join")]
+    BabelJoin(Box<BabelJoin>),
     #[serde(rename = "$fullJoin")]
     Join(Box<Join>),
     #[serde(rename = "$equiJoin")]
@@ -446,6 +448,25 @@ pub struct Join {
     #[serde(rename = "let")]
     pub let_body: Option<LinkedHashMap<String, Expression>>,
     pub pipeline: Vec<Stage>,
+    pub condition: Option<Expression>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum BabelJoin {
+    #[serde(rename = "$inner")]
+    Inner(BabelJoinExpression),
+    #[serde(rename = "$left")]
+    Left(BabelJoinExpression),
+    #[serde(untagged)]
+    Entity(String),
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct BabelJoinExpression {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub root: Option<String>,
+    pub args: Vec<BabelJoin>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub condition: Option<Expression>,
 }
 
@@ -1775,7 +1796,8 @@ impl Stage {
             Stage::Sort(_) => "$sort",
             Stage::SortByCount(_) => "$sortByCount",
             Stage::Group(_) => "$group",
-            Stage::Join(_) => "$join",
+            Stage::BabelJoin(_) => "$join",
+            Stage::Join(_) => "$fullJoin",
             Stage::EquiJoin(_) => "$equiJoin",
             Stage::Unwind(_) => "$unwind",
             Stage::Lookup(_) => "$lookup",

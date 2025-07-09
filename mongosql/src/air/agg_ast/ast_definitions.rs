@@ -21,6 +21,7 @@ fn translate_pipeline(root: Option<air::Stage>, pipeline: Vec<Stage>) -> Option<
 impl From<(Option<air::Stage>, Stage)> for air::Stage {
     fn from((source, ast_stage): (Option<air::Stage>, Stage)) -> Self {
         match ast_stage {
+            Stage::BabelJoin(_) => todo!(),
             Stage::Collection(c) => air::Stage::Collection(air::Collection {
                 db: c.db,
                 collection: c.collection,
