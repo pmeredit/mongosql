@@ -197,6 +197,7 @@ mod standard {
             max_size: Some(1),
         }),
         input = Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Left,
             left: Box::new(Stage::Array(ArraySource {
                 array: vec![test_document_a()],
@@ -221,6 +222,7 @@ mod standard {
             ..
         }),
         input = Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Inner,
             left: Box::new(Stage::Array(ArraySource {
                 array: vec![
@@ -277,6 +279,7 @@ mod standard {
             ..
         }),
         input = Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Inner,
             left: Box::new(Stage::Array(ArraySource {
                 array: vec![
@@ -347,6 +350,7 @@ mod standard {
             max_size: Some(1),
         }),
         input = Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Inner,
             left: Box::new(Stage::Array(ArraySource {
                 array: vec![test_document_a()],
@@ -354,6 +358,7 @@ mod standard {
                 cache: SchemaCache::new(),
             })),
             right: Box::new(Stage::Join(Join {
+                is_natural: false,
                 join_type: JoinType::Left,
                 left: Box::new(Stage::Array(ArraySource {
                     array: vec![test_document_b()],
@@ -382,6 +387,7 @@ mod standard {
             found: Schema::Atomic(Atomic::Integer).into(),
         }),
         input = Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Left,
             left: Box::new(Stage::Array(ArraySource {
                 array: vec![test_document_a()],
@@ -402,6 +408,7 @@ mod standard {
         join_condition_uses_left_datasource,
         expected_pat = Ok(ResultSet { .. }),
         input = Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Left,
             left: Box::new(Stage::Array(ArraySource {
                 array: vec![Expression::Document(
@@ -433,6 +440,7 @@ mod standard {
         join_condition_uses_right_datasource,
         expected_pat = Ok(ResultSet { .. }),
         input = Stage::Join(Join {
+            is_natural: false,
             join_type: JoinType::Left,
             left: Box::new(Stage::Array(ArraySource {
                 array: vec![test_document_a()],
@@ -471,6 +479,7 @@ mod standard {
             subquery: Box::new(Stage::Project(Project {
                 is_add_fields: false,
                 source: Box::new(Stage::Join(Join {
+                    is_natural: false,
                     join_type: JoinType::Left,
                     left: Box::new(Stage::Array(ArraySource {
                         array: vec![test_document_b()],

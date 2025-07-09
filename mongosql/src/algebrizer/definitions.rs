@@ -279,7 +279,7 @@ impl<'a> Algebrizer<'a> {
         }
     }
 
-    pub fn schema_inference_state(&self) -> SchemaInferenceState {
+    pub fn schema_inference_state(&self) -> SchemaInferenceState<'_> {
         SchemaInferenceState {
             env: self.schema_env.clone(),
             catalog: self.catalog,
@@ -703,6 +703,7 @@ impl<'a> Algebrizer<'a> {
         condition
             .clone()
             .map(|e| e.schema(&join_algebrizer.schema_inference_state()));
+        let is_natural = j.is_natural;
         let stage = match j.join_type {
             ast::JoinType::Left => {
                 if condition.is_none() {
@@ -713,6 +714,7 @@ impl<'a> Algebrizer<'a> {
                     left: Box::new(left_src),
                     right: Box::new(right_src),
                     condition,
+                    is_natural,
                     cache: SchemaCache::new(),
                 })
             }
@@ -725,15 +727,25 @@ impl<'a> Algebrizer<'a> {
                     left: Box::new(right_src),
                     right: Box::new(left_src),
                     condition,
+                    is_natural,
                     cache: SchemaCache::new(),
                 })
             }
+            ast::JoinType::Inner if is_natural => mir::Stage::Join(mir::Join {
+                join_type: mir::JoinType::Inner,
+                left: Box::new(left_src),
+                right: Box::new(right_src),
+                condition,
+                is_natural,
+                cache: SchemaCache::new(),
+            }),
             ast::JoinType::Cross | ast::JoinType::Inner => {
                 let join = mir::Stage::Join(mir::Join {
                     join_type: mir::JoinType::Inner,
                     left: Box::new(left_src),
                     right: Box::new(right_src),
                     condition: None,
+                    is_natural,
                     cache: SchemaCache::new(),
                 });
                 // The stage_movement optimization will place this condition in the Join if it makes sense. Otherwise,

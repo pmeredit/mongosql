@@ -47,8 +47,20 @@ impl Visitor for LowerJoinsVisitor {
                 left,
                 right,
                 condition: Some(condition),
+                is_natural,
                 cache,
             }) => {
+                // In the case of a natural join, we do not want to lower.
+                if is_natural {
+                    return Stage::Join(Join {
+                        join_type,
+                        left,
+                        right,
+                        condition: Some(condition),
+                        is_natural,
+                        cache,
+                    });
+                }
                 if let Stage::Derived(_) = right.as_ref() {
                     // Until [SQL-1989] is addressed. Do not lower when the rhs is a Derived Query. This is causing mapping
                     // registry issues.
@@ -57,6 +69,8 @@ impl Visitor for LowerJoinsVisitor {
                         left,
                         right,
                         condition: Some(condition),
+                        // explicit false for clarity
+                        is_natural: false,
                         cache,
                     });
                 }

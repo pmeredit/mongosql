@@ -152,7 +152,7 @@ impl<'a> SchemaInferenceState<'a> {
         }
     }
 
-    pub fn with_merged_schema_env(&self, env: SchemaEnvironment) -> SchemaInferenceState {
+    pub fn with_merged_schema_env(&self, env: SchemaEnvironment) -> SchemaInferenceState<'_> {
         SchemaInferenceState {
             env: env.with_merged_mappings(self.env.clone()),
             catalog: self.catalog,
@@ -161,7 +161,7 @@ impl<'a> SchemaInferenceState<'a> {
         }
     }
 
-    pub fn subquery_state(&self) -> SchemaInferenceState {
+    pub fn subquery_state(&self) -> SchemaInferenceState<'_> {
         SchemaInferenceState {
             scope_level: self.scope_level + 1,
             env: self.env.clone(),

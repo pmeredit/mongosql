@@ -112,6 +112,7 @@ pub struct Join {
     pub left: Box<Stage>,
     pub right: Box<Stage>,
     pub condition: Option<Expression>,
+    pub is_natural: bool,
     pub cache: SchemaCache<ResultSet>,
 }
 

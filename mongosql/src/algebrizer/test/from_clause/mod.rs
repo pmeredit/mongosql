@@ -332,6 +332,7 @@ test_algebrize!(
     left_join,
     method = algebrize_from_clause,
     expected = Ok(mir::Stage::Join(mir::Join {
+        is_natural: false,
         join_type: JoinType::Left,
         left: Box::new(mir_source_foo()),
         right: Box::new(mir_source_bar()),
@@ -351,6 +352,7 @@ test_algebrize!(
     right_join,
     method = algebrize_from_clause,
     expected = Ok(mir::Stage::Join(mir::Join {
+        is_natural: false,
         join_type: JoinType::Left,
         left: Box::new(mir_source_bar()),
         right: Box::new(mir_source_foo()),
@@ -399,6 +401,7 @@ test_algebrize!(
     inner_join,
     method = algebrize_from_clause,
     expected = Ok(mir::Stage::Join(mir::Join {
+        is_natural: false,
         join_type: JoinType::Inner,
         left: Box::new(mir_source_foo()),
         right: Box::new(mir_source_bar()),
@@ -418,6 +421,7 @@ test_algebrize!(
     cross_join,
     method = algebrize_from_clause,
     expected = Ok(mir::Stage::Join(mir::Join {
+        is_natural: false,
         join_type: JoinType::Inner,
         left: Box::new(mir_source_foo()),
         right: Box::new(mir_source_bar()),
@@ -439,6 +443,7 @@ test_algebrize!(
     method = algebrize_from_clause,
     expected = Ok(mir::Stage::Filter(mir::Filter {
         source: Box::new(mir::Stage::Join(mir::Join {
+            is_natural: false,
             join_type: JoinType::Inner,
             left: Box::new(mir_source_foo()),
             right: Box::new(mir_source_bar()),
@@ -650,6 +655,7 @@ test_algebrize!(
         source: Box::new(mir::Stage::Project(mir::Project {
                         is_add_fields: false,
             source: mir::Stage::Join(mir::Join {
+        is_natural: false,
                 join_type: mir::JoinType::Inner,
                 left: mir::Stage::Project(mir::Project {
                         is_add_fields: false,
@@ -747,6 +753,7 @@ test_algebrize!(
     method = algebrize_from_clause,
     expected = Ok(
         mir::Stage::Join(mir::Join {
+        is_natural: false,
         join_type: mir::JoinType::Left,
         left: Box::new(mir::Stage::Project(mir::Project {
                         is_add_fields: false,
