@@ -284,6 +284,14 @@ impl MqlTranslator {
         let right = self.translate_stage(*mir_join.right)?;
         self.is_join = previous_is_join;
 
+        if mir_join.is_natural {
+            return Ok(air::Stage::NaturalJoin(air::NaturalJoin {
+                join_type,
+                left: Box::new(left),
+                right: Box::new(right),
+            }));    
+        }
+
         let mut let_vars = None;
         let condition = mir_join
             .condition

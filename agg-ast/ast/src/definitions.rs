@@ -457,8 +457,16 @@ pub enum BabelJoin {
     Inner(BabelJoinExpression),
     #[serde(rename = "$left")]
     Left(BabelJoinExpression),
+    #[serde(rename = "$pipeline")]
+    Pipeline(BabelJoinPipeline),
     #[serde(untagged)]
     Entity(String),
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct BabelJoinPipeline {
+    pub entity: String,
+    pub pipeline: Vec<Stage>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

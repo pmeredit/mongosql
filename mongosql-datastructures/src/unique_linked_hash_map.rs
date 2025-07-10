@@ -25,6 +25,10 @@ where
         Self(LinkedHashMap::new())
     }
 
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
     pub fn insert_many(
         &mut self,
         other: impl Iterator<Item = (K, V)>,

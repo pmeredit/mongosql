@@ -4,6 +4,12 @@ use crate::{
 };
 use bson::{bson, doc, Bson};
 
+#[derive(Debug, Clone, PartialEq)]
+enum NaturalJoinArgument {
+    Entity(String),
+    Derived(air::Stage, String),
+}
+
 impl MqlCodeGenerator {
     pub fn codegen_stage(&self, stage: air::Stage) -> Result<MqlTranslation> {
         match stage {
@@ -14,6 +20,7 @@ impl MqlCodeGenerator {
             air::Stage::Sort(s) => self.codegen_sort(s),
             air::Stage::Collection(c) => self.codegen_collection(c),
             air::Stage::Join(j) => self.codegen_join(j),
+            air::Stage::NaturalJoin(j) => self.codegen_natural_join(j),
             air::Stage::Unwind(u) => self.codegen_unwind(u),
             air::Stage::Lookup(l) => self.codegen_lookup(l),
             air::Stage::ReplaceWith(r) => self.codegen_replace_with(r),
@@ -380,6 +387,67 @@ impl MqlCodeGenerator {
 
         left_translation.pipeline.push(doc! {"$join": join_doc});
         Ok(left_translation)
+    }
+
+    fn collect_entities(
+        stage: &air::Stage,
+    ) -> Vec<NaturalJoinArgument> {
+        fn aux(stage: &air::Stage, entities: &mut Vec<NaturalJoinArgument>) {
+            if let Some(entity) = stage.get_entity() {
+                entities.push(NaturalJoinArgument::Entity(entity.clone()));
+                return;
+            }
+            if let air::Stage::NaturalJoin(air_join) = stage {
+                aux(&air_join.left, entities);
+                aux(&air_join.right, entities);
+                return
+            }
+            entities.push(
+                NaturalJoinArgument::Derived(
+                    stage.clone(),
+                    "uhh, fix this".to_string()
+                ),
+            );
+        }
+        let mut entities = Vec::new();
+        aux(stage, &mut entities);
+        entities
+    }
+
+    fn codegen_natural_join(&self, air_join: air::NaturalJoin) -> Result<MqlTranslation> {
+        println!("Codegen for natural join: {:?}", air_join);
+        let stage = air::Stage::NaturalJoin(air_join.clone());
+        let entities = Self::collect_entities(&stage);
+        println!("Entities in natural join: {:?}", entities);
+        let join_type = match air_join.join_type {
+            air::JoinType::Inner => "$inner",
+            air::JoinType::Left => "$left",
+        };
+        let mut entities = entities.into_iter().map(|e| match e {
+            NaturalJoinArgument::Entity(entity) => Ok(Bson::String(entity)),
+            NaturalJoinArgument::Derived(stage, as_name) => {
+                let translation = self.codegen_stage(stage)?;
+                Ok(bson! {{ "$derived": {
+                    "entity": as_name,
+                    "pipeline": translation.pipeline,
+                }}})
+            }
+        }).collect::<Result<Vec<Bson>>>()?;
+        let root = entities.remove(0);
+        Ok(
+            MqlTranslation {
+                database: None,
+                collection: None,
+                pipeline: vec![doc! {
+                    "$join": {
+                        join_type: {
+                            "root": root,
+                            "args": entities,
+                        }
+                    }
+                }],
+            }
+        )
     }
 
     fn codegen_equijoin(&self, air_join: air::EquiJoin) -> Result<MqlTranslation> {

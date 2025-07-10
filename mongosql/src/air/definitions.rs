@@ -19,9 +19,34 @@ pub enum Stage {
     UnionWith(UnionWith),
     Skip(Skip),
     Documents(Documents),
+    NaturalJoin(NaturalJoin),
     EquiJoin(EquiJoin),
     EquiLookup(EquiLookup),
     Sentinel
+}
+
+impl Stage {
+    // For Natural Joins
+    // Returns the name of the entity for a Stage is this corresponds to an entity declaration,
+    // which, unfortunately, we demonstrate as a Project with a Source Stage, where the Project
+    // Projects the $$ROOT variable as the entity name.
+    pub fn get_entity(&self) -> Option<String> {
+        match self {
+            Stage::Project(project) => {
+                for (key, value) in project.specifications.iter() {
+                    if let ProjectItem::Assignment(expr) = value {
+                        if let Expression::Variable(var) = expr {
+                            if var.name == "ROOT" {
+                                return Some(key.clone());
+                            }
+                        }
+                    }
+                }
+                None
+            },
+            _ => None,
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -109,6 +134,13 @@ pub enum SortSpecification {
 pub struct Collection {
     pub db: String,
     pub collection: String,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct NaturalJoin {
+    pub join_type: JoinType,
+    pub left: Box<Stage>,
+    pub right: Box<Stage>,
 }
 
 #[derive(PartialEq, Debug, Clone)]

@@ -11,6 +11,7 @@ impl Stage {
             Stage::Sort(s) => s.source.clone(),
             Stage::Collection(_) => Box::new(self.clone()),
             Stage::Join(j) => j.left.clone(),
+            Stage::NaturalJoin(j) => j.left.clone(),
             Stage::Unwind(u) => u.source.clone(),
             Stage::Lookup(l) => l.source.clone(),
             Stage::ReplaceWith(r) => r.source.clone(),
@@ -33,6 +34,7 @@ impl Stage {
             Stage::Sort(s) => s.source = new_source,
             Stage::Collection(_) => {}
             Stage::Join(j) => j.left = new_source,
+            Stage::NaturalJoin(j) => j.left = new_source,
             Stage::Unwind(u) => u.source = new_source,
             Stage::Lookup(l) => l.source = new_source,
             Stage::ReplaceWith(r) => r.source = new_source,
