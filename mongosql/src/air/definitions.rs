@@ -47,6 +47,29 @@ impl Stage {
             _ => None,
         }
     }
+
+    // This is gross, I think we want to move generation of BabelJoins up to the translator so that
+    // we can get the actual bot name, or maybe even the algebrizer.
+    pub fn find_derived_entity(&self) -> Option<String> {
+        match self {
+            Stage::Project(project) => {
+                for (key, value) in project.specifications.iter() {
+                    if let ProjectItem::Assignment(expr) = value {
+                        if let Expression::FieldRef(field) = expr {
+                            if field.name.starts_with("__bot") { 
+                                return Some(key.clone());
+                            }
+                        }
+                    }
+                }
+                project.source.find_derived_entity()
+            },
+            Stage::Collection(_) | Stage::Documents(_) | Stage::Sentinel => None,
+            s => {
+                s.get_source().find_derived_entity()
+            }
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Clone)]

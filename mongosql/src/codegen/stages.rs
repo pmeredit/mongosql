@@ -405,7 +405,9 @@ impl MqlCodeGenerator {
             entities.push(
                 NaturalJoinArgument::Derived(
                     stage.clone(),
-                    "uhh, fix this".to_string()
+                    stage.find_derived_entity().unwrap_or_else(|| {
+                        "FIX ME".to_string()
+                    })
                 ),
             );
         }
