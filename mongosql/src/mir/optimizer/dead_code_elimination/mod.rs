@@ -30,20 +30,27 @@ impl Optimizer for DeadCodeEliminator {
         &self,
         st: Stage,
         _sm: SchemaCheckingMode,
-        _schema_state: &SchemaInferenceState,
+        schema_state: &SchemaInferenceState,
     ) -> (Stage, bool) {
-        let mut v = DeadCodeEliminationVisitor::default();
+        let mut v = DeadCodeEliminationVisitor::new(schema_state);
         let new_stage = v.visit_stage(st);
         (new_stage, v.changed)
     }
 }
 
-#[derive(Default)]
-struct DeadCodeEliminationVisitor {
+struct DeadCodeEliminationVisitor<'a> {
     changed: bool,
+    schema_state: &'a SchemaInferenceState<'a>,
 }
 
-impl DeadCodeEliminationVisitor {
+impl<'a> DeadCodeEliminationVisitor<'a> {
+    fn new(schema_state: &'a SchemaInferenceState) -> Self {
+        Self {
+            changed: false,
+            schema_state,
+        }
+    }
+
     fn group_deadcode_elimination(&mut self, g: Group) -> Stage {
         // For now, only consider Group stages with Project sources.
         if !matches!(*g.source, Stage::Project(_)) {
@@ -116,56 +123,96 @@ impl DeadCodeEliminationVisitor {
         }
     }
 
-    fn project_deadcode_elimination(&mut self, mut p: Project) -> Stage {
-        // If this stage is an AddFields, we skip it for this early limited optimization
-        if p.is_add_fields {
+    fn project_deadcode_elimination(&mut self, p: Project) -> Stage {
+        if !matches!(*p.source, Stage::Project(_)) {
+            // If the source is not a Project, we cannot optimize it.
             return Stage::Project(p);
         }
-        // If a Project is preceeded by an AddFields, we can merge them.
-        if !matches!(
-            *p.source,
-            Stage::Project(Project {
-                is_add_fields: true,
-                ..
-            })
-        ) {
-            return Stage::Project(p);
-        }
-        let Stage::Project(source_p) = *std::mem::replace(&mut p.source, Box::new(Stage::Sentinel))
-        else {
-            unreachable!(); // We already checked this
-        };
-        let mut failed = false;
-        // Substitution does wonky things with respect to document field accesses, so for now we
-        // just remove an AddFields stage if it defines exactly a subset of what the project after it does with the same values.
-        for (k, v) in source_p.expression.iter() {
-            if let Some(expr) = p.expression.get(k) {
-                if expr != v {
-                    failed = true;
-                    break;
-                }
-            } else {
-                failed = true;
-                break;
+        let defines = p.source.defines();
+        let new_p = p.substitute(defines);
+        match new_p {
+            Ok(mut new_p) => {
+                // If the substitution was successful, we can remove the project's source
+                new_p.source = if let Stage::Project(s) = *(new_p.source) {
+                    // If the source is a Project, we can just use its source
+                    s.source
+                } else {
+                    // Otherwise, we just use the source as is
+                    unreachable!("Source must have been a Project");
+                };
+                // Then we need to go and constant fold all the expressions because there are
+                // issues with compounding field lookups on document literals.
+                let mut constant_fold_visitor = crate::mir::optimizer::constant_folding::ConstantFoldExprVisitor{
+                    state: self.schema_state,
+                    changed: false,
+                };
+                // We want to constant fold on each individual expression because the visitor will
+                // recurse down all stages if allowed to operate on a Stage level.
+                new_p.expression = dbg!(new_p
+                    .expression
+                    .into_iter()
+                    .map(|(k, v)| {
+                        let folded = constant_fold_visitor.visit_expression(v);
+                        (k, folded)
+                    })
+                    .collect());
+                self.changed = true;
+                Stage::Project(new_p)
+            }
+            Err(new_p) => {
+                Stage::Project(*new_p)
             }
         }
-        if failed {
-            return Stage::Project(Project {
-                // we failed, make sure to put the source back
-                source: Box::new(Stage::Project(source_p)),
-                ..p
-            });
-        }
-        // We suceeded, so we drop the source by setting the source to the source's source
-        self.changed = true;
-        Stage::Project(Project {
-            source: source_p.source,
-            ..p
-        })
+
+//        // If this stage is an AddFields, we skip it for this early limited optimization
+//        if p.is_add_fields {
+//            return Stage::Project(p);
+//        }
+//        // If a Project is preceeded by an AddFields, we can merge them.
+//        if !matches!(
+//            *p.source,
+//            Stage::Project(Project {
+//                is_add_fields: true,
+//                ..
+//            })
+//        ) {
+//            return Stage::Project(p);
+//        }
+//        let Stage::Project(source_p) = *std::mem::replace(&mut p.source, Box::new(Stage::Sentinel))
+//        else {
+//            unreachable!(); // We already checked this
+//        };
+//        let mut failed = false;
+//        // Substitution does wonky things with respect to document field accesses, so for now we
+//        // just remove an AddFields stage if it defines exactly a subset of what the project after it does with the same values.
+//        for (k, v) in source_p.expression.iter() {
+//            if let Some(expr) = p.expression.get(k) {
+//                if expr != v {
+//                    failed = true;
+//                    break;
+//                }
+//            } else {
+//                failed = true;
+//                break;
+//            }
+//        }
+//        if failed {
+//            return Stage::Project(Project {
+//                // we failed, make sure to put the source back
+//                source: Box::new(Stage::Project(source_p)),
+//                ..p
+//            });
+//        }
+//        // We suceeded, so we drop the source by setting the source to the source's source
+//        self.changed = true;
+//        Stage::Project(Project {
+//            source: source_p.source,
+//            ..p
+//        })
     }
 }
 
-impl Visitor for DeadCodeEliminationVisitor {
+impl<'a> Visitor for DeadCodeEliminationVisitor<'a> {
     fn visit_stage(&mut self, node: Stage) -> Stage {
         let node = node.walk(self);
         match node {
