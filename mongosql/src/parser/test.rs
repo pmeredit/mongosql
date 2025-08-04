@@ -2038,7 +2038,7 @@ mod from {
     parsable!(
         natural_join_second_alias,
         expected = true,
-        input = "SELECT * FROM foo NATURAL JOIN bar AS bar"
+        input = "SELECT * FROM foo SMART JOIN bar AS bar"
     );
     parsable!(
         two_inner_join_first_alias,
@@ -3627,7 +3627,7 @@ mod unrecognized_token_suggestion {
     parsable!(
         nothing_close_to_recommend,
         expected = false,
-        expected_error_user_msg = "Unrecognized token `=>`, expected: `+`, `AND`, `AS`, `BETWEEN`, `,`, `||`, `CROSS`, ```, `\"`, `/`, `.`, `::`, `=`, `>`, `>=`, `ID`, `IN`, `INNER`, `IS`, `JOIN`, `LEFT`, `[`, `(`, `LIKE`, `<`, `<=`, `NATURAL`, `<>`, `NOT`, `NOT IN`, `NOT LIKE`, `OR`, `RIGHT`, `)`, `*`, `-`, `::!`, `WITH`",
+        expected_error_user_msg = "Unrecognized token `=>`, expected: `+`, `AND`, `AS`, `BETWEEN`, `,`, `||`, `CROSS`, ```, `\"`, `/`, `.`, `::`, `=`, `>`, `>=`, `ID`, `IN`, `INNER`, `IS`, `JOIN`, `LEFT`, `[`, `(`, `LIKE`, `<`, `<=`, `<>`, `NOT`, `NOT IN`, `NOT LIKE`, `OR`, `RIGHT`, `)`, `SMART`, `*`, `-`, `::!`, `WITH`",
         input = "select * from UNWIND(foo => foo)"
     );
 

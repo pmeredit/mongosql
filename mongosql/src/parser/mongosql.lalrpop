@@ -86,7 +86,7 @@ JoinDatasource: Datasource = {
             }
         )
     },
-    <d:Datasource> <n: (NATURAL)?> <jt:JoinType> JOIN <njd:NonJoinDatasource> <c:(ON <Expression>)?> => {
+    <d:Datasource> <n: (SMART)?> <jt:JoinType> JOIN <njd:NonJoinDatasource> <c:(ON <Expression>)?> => {
         Datasource::Join(
             JoinSource {
                 join_type: jt,
@@ -897,6 +897,7 @@ match {
   r"(?i)rows?\s+only" => ROWS_ONLY,
   r"(?i)separator" => SEPARATOR,
   r"(?i)smallint" => SMALLINT,
+  r"(?i)smart" => SMART,
   r"(?i)some" => SOME,
   r"(?i)string" => STRING_TYPE,
   r"(?i)substring" => SUBSTRING,

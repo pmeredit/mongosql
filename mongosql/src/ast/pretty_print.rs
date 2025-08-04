@@ -92,6 +92,7 @@ lazy_static! {
         r"(?i)rows?\s+only$",
         r"(?i)separator$",
         r"(?i)smallint$",
+        r"(?i)smart$",
         r"(?i)some$",
         r"(?i)string$",
         r"(?i)substring$",
@@ -393,7 +394,7 @@ impl PrettyPrint for JoinSource {
             "{} {} JOIN {}{}",
             self.left.pretty_print()?,
             if self.is_natural {
-                format!("{} {}", "NATURAL", self.join_type.pretty_print()?)
+                format!("{} {}", "SMART", self.join_type.pretty_print()?)
             } else {
                 self.join_type.pretty_print()?
             },
