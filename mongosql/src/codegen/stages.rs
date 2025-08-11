@@ -402,13 +402,24 @@ impl MqlCodeGenerator {
                 aux(&air_join.right, entities);
                 return
             }
+            let derived_name = if let air::Stage::Project(ref p) = stage {
+                p.specifications.iter().find_map(|(k, v)| {
+                    if let air::ProjectItem::Assignment(_) = v {
+                        Some(k.clone())
+                    } else {
+                        None
+                    }
+                }).unwrap_or_else(|| {
+                    panic!("derived query did not have an alias in project stage")
+                })
+            } else {
+                unreachable!("derived query did not have an alias")
+            };
             entities.push(
                 NaturalJoinArgument::Derived(
                     stage.clone(),
-                    stage.find_derived_entity().unwrap_or_else(|| {
-                        "FIX ME".to_string()
-                    })
-                ),
+                    derived_name,
+                )
             );
         }
         let mut entities = Vec::new();
@@ -417,10 +428,8 @@ impl MqlCodeGenerator {
     }
 
     fn codegen_natural_join(&self, air_join: air::NaturalJoin) -> Result<MqlTranslation> {
-        println!("Codegen for natural join: {:?}", air_join);
         let stage = air::Stage::NaturalJoin(air_join.clone());
         let entities = Self::collect_entities(&stage);
-        println!("Entities in natural join: {:?}", entities);
         let join_type = match air_join.join_type {
             air::JoinType::Inner => "$inner",
             air::JoinType::Left => "$left",
