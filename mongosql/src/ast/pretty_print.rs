@@ -159,11 +159,19 @@ impl PrettyPrint for Insert {
         Ok(format!(
             "INSERT INTO {} {} {}",
             self.target.pretty_print()?,
-            self.columns
-                .iter()
-                .map(|c| identifier_to_string(c.as_str()))
-                .collect::<Vec<_>>()
-                .join(", "),
+            {
+                let cols_text = self
+                    .columns
+                    .iter()
+                    .map(|c| identifier_to_string(c.as_str()))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                if cols_text.is_empty() {
+                    cols_text
+                } else {
+                    format!("COLUMNS ({})", cols_text)
+                }
+            },
             self.source.pretty_print()?
         ))
     }
