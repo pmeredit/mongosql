@@ -21,6 +21,12 @@ Insert: Insert = {
     target: t,
     columns: if let Some((_,_,v,_)) = c { v } else { vec![] },
     source: InsertSource::Values(s),
+  }),
+ INSERT INTO <t:SimpleDatasource> <c:(COLUMNS LEFT_PAREN CommaPlus<Identifier> RIGHT_PAREN)?> <q:Query> =>? 
+ Ok(Insert{
+    target: t,
+    columns: if let Some((_,_,v,_)) = c { v } else { vec![] },
+    source: InsertSource::Query(q),
   })
 };
 
