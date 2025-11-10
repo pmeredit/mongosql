@@ -10,18 +10,24 @@ extern {
 
 pub Statement: Statement = {
   <q:Query> => Statement::Query(q),
-  //<i:Insert> => Statement::Insert(i),
+  <i:Insert> => Statement::Insert(i),
   <u:Update> => Statement::Update(u),
   <d:Delete> => Statement::Delete(d),
 };
 
-//Insert: Insert = {
-// INSERT INTO <i:Identifier> LEFT_PAREN <c:CommaPlus<Identifier>> RIGHT_PAREN VALUE LEFT_PAREN <v:CommaPlus<Expression>> RIGHT_PAREN => Insert{
-//    target: s,
-//    columns: c,
-//    values: InsertSource::Values(v),
-//  }
-//};
+Insert: Insert = {
+ INSERT INTO <t:SimpleDatasource> <c:(COLUMNS LEFT_PAREN CommaPlus<Identifier> RIGHT_PAREN)?> VALUE LEFT_PAREN <s:CommaPlus<ExpressionOrDefault>> RIGHT_PAREN =>? 
+ Ok(Insert{
+    target: t,
+    columns: if let Some((_,_,v,_)) = c { v } else { vec![] },
+    source: InsertSource::Values(s),
+  })
+};
+
+ExpressionOrDefault: ExpressionOrDefault = {
+  DEFAULT => ExpressionOrDefault::Default,
+  <e:Expression> => ExpressionOrDefault::Expression(e),
+};
 
 Update: Update = {
   UPDATE <t:SimpleDatasource> SET <s:CommaPlus<UpdateAssignment>> <w:(WHERE <Expression>)?> =>? Ok(Update{
@@ -876,11 +882,13 @@ match {
   r"(?i)character" => CHARACTER,
   r"(?i)char varying" => CHAR_VARYING,
   r"(?i)character varying" => CHARACTER_VARYING,
+  r"(?i)columns" => COLUMNS,
   r"(?i)cross" => CROSS,
   r"(?i)current_timestamp" => CURRENT_TIMESTAMP,
   r"(?i)date" => DATE,
   r"(?i)dbpointer" => DBPOINTER,
   r"(?i)dec" => DEC,
+  r"(?i)default" => DEFAULT,
   r"(?i)delete" => DELETE,
   r"(?i)decimal" => DECIMAL,
   r"(?i)depth" => DEPTH,

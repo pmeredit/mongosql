@@ -157,7 +157,7 @@ impl PrettyPrint for Statement {
 impl PrettyPrint for Insert {
     fn pretty_print(&self) -> Result<String> {
         Ok(format!(
-            "INSERT INTO {}{} ({})",
+            "INSERT INTO {} {} {}",
             self.target.pretty_print()?,
             self.columns
                 .iter()
