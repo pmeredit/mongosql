@@ -1,20 +1,30 @@
 use crate::ast::{
     self,
-    rewrites::{Pass, Result, Error},
+    rewrites::{Error, Pass, Result},
     visitor::Visitor,
 };
 
 pub struct SubstituteParametersRewritePass<'a> {
-    pub arguments: &'a[ast::Expression],
+    pub arguments: &'a [ast::Expression],
 }
 
-impl<'a> SubstituteParametersRewritePass<'a>  {
-    pub fn new(arguments: &'a[ast::Expression]) -> Self {
+impl<'a> SubstituteParametersRewritePass<'a> {
+    pub fn new(arguments: &'a [ast::Expression]) -> Self {
         Self { arguments }
     }
 }
 
 impl<'a> Pass for SubstituteParametersRewritePass<'a> {
+    fn apply_to_statement(&self, stmt: ast::Statement) -> Result<ast::Statement> {
+        let mut visitor = SubstituteParametersVisitor::new(self.arguments);
+        let ret = visitor.visit_statement(stmt);
+        if let Some(error) = visitor.error {
+            Err(error)
+        } else {
+            Ok(ret)
+        }
+    }
+
     fn apply(&self, ast: ast::Query) -> Result<ast::Query> {
         let mut visitor = SubstituteParametersVisitor::new(self.arguments);
         let ret = visitor.visit_query(ast);
@@ -27,18 +37,24 @@ impl<'a> Pass for SubstituteParametersRewritePass<'a> {
 }
 
 pub struct SubstituteParametersVisitor<'a> {
-    pub arguments: &'a[ast::Expression],
+    pub arguments: &'a [ast::Expression],
     pub error: Option<Error>,
 }
 
 impl<'a> SubstituteParametersVisitor<'a> {
-    pub fn new(arguments: &'a[ast::Expression]) -> Self {
-        Self { arguments, error: None }
+    pub fn new(arguments: &'a [ast::Expression]) -> Self {
+        Self {
+            arguments,
+            error: None,
+        }
     }
 }
 
 impl<'a> Visitor for SubstituteParametersVisitor<'a> {
-    fn visit_expression(&mut self, node:ast::definitions::Expression) -> ast::definitions::Expression {
+    fn visit_expression(
+        &mut self,
+        node: ast::definitions::Expression,
+    ) -> ast::definitions::Expression {
         if let ast::Expression::Parameter(index) = node {
             if let Some(arg) = self.arguments.get(index) {
                 arg.clone()

@@ -1,6 +1,6 @@
-use variant_count::VariantCount;
-use std::convert::TryFrom;
 use bson::Bson;
+use std::convert::TryFrom;
+use variant_count::VariantCount;
 
 #[macro_export]
 macro_rules! multimap {
@@ -17,6 +17,54 @@ macro_rules! multimap {
 }
 
 visitgen::generate_visitors! {
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum Statement {
+    Query(Query),
+    Insert(Insert),
+    Update(Update),
+    Delete(Delete),
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Insert {
+    pub target: Datasource,
+    pub columns: Vec<String>,
+    pub source: InsertSource,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum InsertSource {
+    Values(Vec<ExpressionOrDefault>),
+    Query(Query),
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum ExpressionOrDefault {
+    Expression(Expression),
+    Default,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Update {
+    pub target: Datasource,
+    pub assignments: Vec<UpdateAssignment>,
+    pub where_clause: Option<Expression>,
+    pub returning_clause: Option<Vec<SelectExpression>>,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct UpdateAssignment {
+    pub field: String,
+    pub value: Expression,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Delete {
+    pub target: Datasource,
+    pub where_clause: Option<Expression>,
+    pub returning_clause: Option<Vec<SelectExpression>>,
+}
 
 #[derive(PartialEq, Debug, Clone, VariantCount)]
 pub enum Query {

@@ -73,6 +73,15 @@ pub enum Error {
 
 /// A fallible transformation that can be applied to a query
 pub trait Pass {
+    fn apply_to_statement(&self, stmt: ast::Statement) -> Result<ast::Statement> {
+        match stmt {
+            ast::Statement::Query(q) => {
+                let rewritten = self.apply(q)?;
+                Ok(ast::Statement::Query(rewritten))
+            }
+            _ => Ok(stmt),
+        }
+    }
     fn apply(&self, query: ast::Query) -> Result<ast::Query>;
 }
 

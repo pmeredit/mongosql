@@ -143,6 +143,98 @@ pub trait PrettyPrint {
     fn pretty_print(&self) -> Result<String>;
 }
 
+impl PrettyPrint for Statement {
+    fn pretty_print(&self) -> Result<String> {
+        match self {
+            Statement::Query(q) => q.pretty_print(),
+            Statement::Insert(q) => q.pretty_print(),
+            Statement::Update(q) => q.pretty_print(),
+            Statement::Delete(q) => q.pretty_print(),
+        }
+    }
+}
+
+impl PrettyPrint for Insert {
+    fn pretty_print(&self) -> Result<String> {
+        Ok(format!(
+            "INSERT INTO {}{} ({})",
+            self.target.pretty_print()?,
+            self.columns
+                .iter()
+                .map(|c| identifier_to_string(c.as_str()))
+                .collect::<Vec<_>>()
+                .join(", "),
+            self.source.pretty_print()?
+        ))
+    }
+}
+
+impl PrettyPrint for InsertSource {
+    fn pretty_print(&self) -> Result<String> {
+        match self {
+            InsertSource::Values(v) => Ok(format!(
+                "VALUES ({})",
+                v.iter()
+                    .map(|x| x.pretty_print())
+                    .collect::<Result<Vec<_>>>()?
+                    .join(", ")
+            )),
+            InsertSource::Query(q) => q.pretty_print(),
+        }
+    }
+}
+
+impl PrettyPrint for ExpressionOrDefault {
+    fn pretty_print(&self) -> Result<String> {
+        match self {
+            ExpressionOrDefault::Expression(e) => e.pretty_print(),
+            ExpressionOrDefault::Default => Ok("DEFAULT".to_string()),
+        }
+    }
+}
+
+impl PrettyPrint for Update {
+    // TODO: returning...
+    fn pretty_print(&self) -> Result<String> {
+        Ok(format!(
+            "UPDATE {} SET {}{}",
+            self.target.pretty_print()?,
+            self.assignments
+                .iter()
+                .map(|a| a.pretty_print())
+                .collect::<Result<Vec<_>>>()?
+                .join(", "),
+            self.where_clause
+                .as_ref()
+                .map_or(Ok("".to_string()), |x| Ok(format!(
+                    " WHERE {}",
+                    x.pretty_print()?
+                )))?,
+        ))
+    }
+}
+
+impl PrettyPrint for UpdateAssignment {
+    fn pretty_print(&self) -> Result<String> {
+        Ok(format!("{} = {}", self.field, self.value.pretty_print()?))
+    }
+}
+
+impl PrettyPrint for Delete {
+    fn pretty_print(&self) -> Result<String> {
+        Ok(format!(
+            "DELETE FROM {}{}",
+            self.target.pretty_print()?,
+            self.where_clause
+                .as_ref()
+                .map_or(Ok("".to_string()), |x| Ok(format!(
+                    " WHERE {}",
+                    x.pretty_print()?
+                )))?,
+        ))
+    }
+}
+
 impl PrettyPrint for Query {
     fn pretty_print(&self) -> Result<String> {
         match self {

@@ -18,7 +18,7 @@ pub mod json_schema;
 mod mapping_registry;
 pub mod options;
 mod parser;
-pub use parser::parse_query;
+pub use parser::{parse_query, parse_statement};
 pub mod result;
 pub mod schema;
 #[cfg(test)]
@@ -149,17 +149,18 @@ pub fn get_namespaces(
 pub fn substitute_parameters(
     sql: &str,
     arguments: &[ast::Expression],
-) -> Result<ast::Query> {
+) -> Result<ast::Statement> {
     use ast::rewrites::Pass;
-    let ast = parser::parse_query(sql)?;
+    dbg!(sql);
+    let ast = parser::parse_statement(sql)?;
     let pass = ast::rewrites::SubstituteParametersRewritePass::new(arguments);
-    Ok(pass.apply(ast)?)
+    Ok(pass.apply_to_statement(ast)?)
 }
 
 pub fn substitute_bson_into_parameters(
     sql: &str,
     arguments: &bson::Array,
-) -> Result<ast::Query> {
+) -> Result<ast::Statement> {
     let expressions = arguments
         .iter()
         .map(|bson| 

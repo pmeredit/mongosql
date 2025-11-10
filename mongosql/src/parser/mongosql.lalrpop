@@ -8,6 +8,45 @@ extern {
     type Error = String;
 }
 
+pub Statement: Statement = {
+  <q:Query> => Statement::Query(q),
+  //<i:Insert> => Statement::Insert(i),
+  <u:Update> => Statement::Update(u),
+  <d:Delete> => Statement::Delete(d),
+};
+
+//Insert: Insert = {
+// INSERT INTO <i:Identifier> LEFT_PAREN <c:CommaPlus<Identifier>> RIGHT_PAREN VALUE LEFT_PAREN <v:CommaPlus<Expression>> RIGHT_PAREN => Insert{
+//    target: s,
+//    columns: c,
+//    values: InsertSource::Values(v),
+//  }
+//};
+
+Update: Update = {
+  UPDATE <t:SimpleDatasource> SET <s:CommaPlus<UpdateAssignment>> <w:(WHERE <Expression>)?> =>? Ok(Update{
+    target: t,
+    assignments: s,
+    where_clause: w,
+    returning_clause: None,
+  })
+};
+
+UpdateAssignment: UpdateAssignment = {
+  <i:Identifier> EQ <v:Expression> => UpdateAssignment{
+    field: i,
+    value: v,
+  }
+};
+
+Delete: Delete = {
+  DELETE FROM <t:SimpleDatasource> <w:(WHERE <Expression>)?> =>? Ok(Delete{
+    target: t,
+    where_clause: w,
+    returning_clause: None,
+  })
+};
+
 pub Query: Query = {
   WithQuery => <>,
   SimpleQuery => <>
@@ -842,6 +881,7 @@ match {
   r"(?i)date" => DATE,
   r"(?i)dbpointer" => DBPOINTER,
   r"(?i)dec" => DEC,
+  r"(?i)delete" => DELETE,
   r"(?i)decimal" => DECIMAL,
   r"(?i)depth" => DEPTH,
   r"(?i)desc" => DESC,
@@ -865,7 +905,9 @@ match {
   r"(?i)in" => IN,
   r"(?i)index" => INDEX,
   r"(?i)inner" => INNER,
+  r"(?i)insert" => INSERT,
   r"(?i)int" => INT_TYPE,
+  r"(?i)into" => INTO,
   r"(?i)integer" => INTEGER,
   r"(?i)is" => IS,
   r"(?i)javascript" => JAVASCRIPT,
@@ -900,6 +942,7 @@ match {
   r"(?i)right" => RIGHT,
   r"(?i)rows?\s+only" => ROWS_ONLY,
   r"(?i)separator" => SEPARATOR,
+  r"(?i)set" => SET,
   r"(?i)smallint" => SMALLINT,
   r"(?i)some" => SOME,
   r"(?i)string" => STRING_TYPE,
@@ -914,6 +957,7 @@ match {
   r"(?i)undefined" => UNDEFINED,
   r"(?i)union" => UNION,
   r"(?i)unwind" => UNWIND,
+  r"(?i)update" => UPDATE,
   r"(?i)values?" => VALUE,
   r"(?i)varchar" => VARCHAR,
   r"(?i)when" => WHEN,

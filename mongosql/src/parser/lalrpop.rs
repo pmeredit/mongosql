@@ -90,6 +90,7 @@ impl From<LalrpopError<'_>> for Error {
 }
 
 lazy_static! {
+    static ref STATEMENT_PARSER: grammar::StatementParser = grammar::StatementParser::new();
     static ref QUERY_PARSER: grammar::QueryParser = grammar::QueryParser::new();
     static ref EXPRESSION_PARSER: grammar::ExpressionParser = grammar::ExpressionParser::new();
     static ref TOKEN_MAP: HashMap<&'static str, &'static str> = HashMap::from([
@@ -133,6 +134,11 @@ pub fn get_token<T: Into<String>>(input: T) -> String {
         Some(token) => (*token).to_string(),
         None => input.to_string(),
     }
+}
+
+pub fn parse_statement(input: &str) -> Result<ast::Statement> {
+    let mut param_count = 0usize;
+    Ok(STATEMENT_PARSER.parse(&mut param_count, input)?)
 }
 
 pub fn parse_query(input: &str) -> Result<ast::Query> {
