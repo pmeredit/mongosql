@@ -50,7 +50,7 @@ pub struct Update {
     pub target: Datasource,
     pub assignments: Vec<UpdateAssignment>,
     pub where_clause: Option<Expression>,
-    pub returning_clause: Option<Vec<SelectExpression>>,
+    pub returning_clause: Option<SelectBody>,
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -63,7 +63,7 @@ pub struct UpdateAssignment {
 pub struct Delete {
     pub target: Datasource,
     pub where_clause: Option<Expression>,
-    pub returning_clause: Option<Vec<SelectExpression>>,
+    pub returning_clause: Option<SelectBody>,
 }
 
 #[derive(PartialEq, Debug, Clone, VariantCount)]

@@ -36,11 +36,11 @@ ExpressionOrDefault: ExpressionOrDefault = {
 };
 
 Update: Update = {
-  UPDATE <t:Datasource> SET <s:CommaPlus<UpdateAssignment>> <w:(WHERE <Expression>)?> =>? Ok(Update{
+  UPDATE <t:Datasource> SET <s:CommaPlus<UpdateAssignment>> <w:(WHERE <Expression>)?> <r:(RETURNING SelectBody)?> =>? Ok(Update{
     target: t,
     assignments: s,
     where_clause: w,
-    returning_clause: None,
+    returning_clause: r.map(|r| r.1),
   })
 };
 
@@ -52,10 +52,10 @@ UpdateAssignment: UpdateAssignment = {
 };
 
 Delete: Delete = {
-  DELETE FROM <t:Datasource> <w:(WHERE <Expression>)?> =>? Ok(Delete{
+  DELETE FROM <t:Datasource> <w:(WHERE <Expression>)?> <r:(RETURNING SelectBody)?> =>? Ok(Delete{
     target: t,
     where_clause: w,
-    returning_clause: None,
+    returning_clause: r.map(|r| r.1),
   })
 };
 
@@ -953,6 +953,7 @@ match {
   r"(?i)precision" => PRECISION,
   r"(?i)real" => REAL,
   r"(?i)regex" => REGEX,
+  r"(?i)returning" => RETURNING,
   r"(?i)right" => RIGHT,
   r"(?i)rows?\s+only" => ROWS_ONLY,
   r"(?i)separator" => SEPARATOR,
