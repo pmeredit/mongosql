@@ -63,10 +63,6 @@ pub fn translate_sql(
     let ast = ast::rewrites::rewrite_statement(ast)?;
     let select_order = get_select_order(&ast);
 
-    let ast = match ast {
-        ast::Statement::Query(q) => q,
-        _ => todo!(),
-    };
     // construct the algebrizer and use it to build an mir plan
     let algebrizer = Algebrizer::new(
         current_db,
@@ -76,7 +72,7 @@ pub fn translate_sql(
         sql_options.allow_order_by_missing_columns,
         crate::algebrizer::ClauseType::Unintialized,
     );
-    let plan = algebrizer.algebrize_query(ast)?;
+    let plan = algebrizer.algebrize_statement(ast)?;
 
     // optimizer runs
     let plan = mir::optimizer::optimize_plan(

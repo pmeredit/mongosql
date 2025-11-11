@@ -15,6 +15,12 @@ visitgen::generate_visitors! {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Stage {
+    // Writes
+    Delete(Delete),
+    Update(Update),
+    Insert(Insert),
+
+    // Query
     Filter(Filter),
     Project(Project),
     Group(Group),
@@ -43,6 +49,35 @@ impl Stage {
         matches!(self, Stage::Sort(_))
     }
 }
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Delete {
+    pub collection: Box<Collection>,
+    pub condition: Option<Box<Expression>>,
+    // no need for schema cache here since DELETE does not produce output
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Update {
+    pub collection: Box<Collection>,
+    pub assignments: Vec<DocumentExpr>,
+    pub condition: Option<Box<Expression>>,
+    // no need for schema cache here since UPDATE does not produce output
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Insert {
+    pub collection: Box<Collection>,
+    pub source: ValuesOrSubquery,
+    // no need for schema cache here since INSERT does not produce output
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum ValuesOrSubquery {
+    Values(Vec<DocumentExpr>),
+    Subquery(Box<Stage>),
+}
+
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Filter {

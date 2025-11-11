@@ -317,6 +317,41 @@ impl<'a> Algebrizer<'a> {
         func.is_always_nullable() || Self::args_are_nullable(args)
     }
 
+    pub fn algebrize_statement(&self, ast_node: ast::Statement) -> Result<mir::Stage> {
+        match ast_node {
+            ast::Statement::Query(q) => self.algebrize_query(q),
+            ast::Statement::Delete(d) => self.algebrize_delete_statement(d),
+            _ => todo!(),
+        }
+    }
+
+    pub fn algebrize_delete_statement(&self, ast_node: ast::Delete) -> Result<mir::Stage> {
+        let from_stage = self.algebrize_datasource(ast_node.target)?;
+        let from_result_set = from_stage.schema(&self.schema_inference_state())?;
+        let collection = if let mir::Stage::Collection(c) = from_stage {
+            Box::new(c)
+        } else {
+            return Err(Error::DeleteMustHaveCollectionSource);
+        };
+        let delete_algebrizer = self
+            .clone()
+            .with_merged_mappings(from_result_set.schema_env)?;
+        let condition = if let Some(where_clause) = ast_node.where_clause {
+            Some(Box::new(
+                delete_algebrizer.algebrize_expression(where_clause, false)?,
+            ))
+        } else {
+            None
+        };
+        schema_check_return!(
+            self,
+            mir::Stage::Delete(mir::Delete {
+                collection,
+                condition,
+            })
+        )
+    }
+
     pub fn algebrize_query(&self, ast_node: ast::Query) -> Result<mir::Stage> {
         match ast_node {
             ast::Query::Select(q) => self.algebrize_select_query(*q),

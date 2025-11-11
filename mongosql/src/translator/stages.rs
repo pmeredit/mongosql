@@ -28,6 +28,11 @@ impl MqlTranslator {
             mir::Stage::Derived(d) => self.translate_derived(d),
             mir::Stage::Unwind(u) => self.translate_unwind(u),
             mir::Stage::MqlIntrinsic(i) => self.translate_mql_intrinsic(i),
+            // Writes
+            mir::Stage::Insert(_) => todo!(),
+            mir::Stage::Update(_) => todo!(),
+            mir::Stage::Delete(_) => todo!(),
+
             mir::Stage::Sentinel => unreachable!(),
         }
     }

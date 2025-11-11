@@ -34,6 +34,25 @@ pub use with_query::WithQueryRewritePass;
 #[cfg(test)]
 mod test;
 
+const PASSES_LIST: &[&dyn Pass] = &[
+    &ExtendedUnwindRewritePass,
+    &InTupleRewritePass,
+    &SingleTupleRewritePass,
+    &GroupBySelectAliasRewritePass,
+    &AddAliasRewritePass,
+    &PositionalSortKeyRewritePass,
+    &AggregateRewritePass,
+    &SelectRewritePass,
+    &ImplicitFromRewritePass,
+    &TableSubqueryRewritePass,
+    &OptionalParameterRewritePass,
+    &NotComparisonRewritePass,
+    &ScalarFunctionsRewritePass,
+    // WithQueryRewritePass can introduce duplicated queries, so it should be the last pass so
+    // any rewrites that apply in the WithQuery queries are applied only once.
+    &WithQueryRewritePass,
+];
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Errors that can occur during rewrite passes
@@ -98,25 +117,6 @@ pub trait Pass {
     }
     fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query>;
 }
-
-const PASSES_LIST: &[&dyn Pass] = &[
-    &ExtendedUnwindRewritePass,
-    &InTupleRewritePass,
-    &SingleTupleRewritePass,
-    &GroupBySelectAliasRewritePass,
-    &AddAliasRewritePass,
-    &PositionalSortKeyRewritePass,
-    &AggregateRewritePass,
-    &SelectRewritePass,
-    &ImplicitFromRewritePass,
-    &TableSubqueryRewritePass,
-    &OptionalParameterRewritePass,
-    &NotComparisonRewritePass,
-    &ScalarFunctionsRewritePass,
-    // WithQueryRewritePass can introduce duplicated queries, so it should be the last pass so
-    // any rewrites that apply in the WithQuery queries are applied only once.
-    &WithQueryRewritePass,
-];
 
 pub fn rewrite_statement(stmt: ast::Statement) -> Result<ast::Statement> {
     let mut rewritten = stmt;

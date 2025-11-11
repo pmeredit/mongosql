@@ -93,6 +93,7 @@ lazy_static! {
         r"(?i)precision$",
         r"(?i)real$",
         r"(?i)regex$",
+        r"(?i)returning$",
         r"(?i)right$",
         r"(?i)rows?\s+only$",
         r"(?i)separator$",

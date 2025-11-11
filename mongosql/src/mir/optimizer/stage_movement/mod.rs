@@ -27,8 +27,9 @@ use crate::mir::optimizer::util::ContainsSubqueryVisitor;
 use crate::{
     mir::{
         binding_tuple::Key, schema::SchemaInferenceState, visitor::Visitor, Derived, EquiJoin,
-        Expression, Filter, Group, Join, JoinType, LateralJoin, Limit, MatchFilter, MqlStage,
-        Offset, Project, ScalarFunction, ScalarFunctionApplication, Set, Sort, Stage, Unwind,
+        Expression, Filter, Group, Insert, Join, JoinType, LateralJoin, Limit, MatchFilter,
+        MqlStage, Offset, Project, ScalarFunction, ScalarFunctionApplication, Set, Sort, Stage,
+        Unwind, ValuesOrSubquery,
     },
     schema::ResultSet,
     SchemaCheckingMode,
@@ -76,6 +77,9 @@ impl Stage {
             // an offset, but we can consider that a very rare occurrence.
             Stage::Unwind(_) => true,
             Stage::MqlIntrinsic(_) => true,
+            // Writes have no affect on Limit/Offset movement, and cannot actually exist this way,
+            // anyway.
+            Stage::Delete(_) | Stage::Insert(_) | Stage::Update(_) => false,
             Stage::Sentinel => unreachable!(),
         }
     }
@@ -124,9 +128,13 @@ impl Stage {
                     ..n
                 }),
             ),
-            Stage::Collection(_) => (vec![], self),
-            Stage::Array(_) => (vec![], self),
-            Stage::Sentinel => (vec![], self),
+            Stage::Collection(_)
+            | Stage::Array(_)
+            | Stage::Sentinel
+            // Writes are also terminal stages.
+            | Stage::Delete(_)
+            | Stage::Insert(_)
+            | Stage::Update(_) => (vec![], self),
             Stage::Join(n) => (
                 vec![*n.left, *n.right],
                 Stage::Join(Join {
@@ -228,7 +236,12 @@ impl Stage {
                 source: sources.swap_remove(0).into(),
                 ..s
             }),
-            Stage::Collection(_) | Stage::Array(_) => self,
+            Stage::Collection(_)
+            | Stage::Array(_)
+            // Writes are also terminal stages.
+            | Stage::Delete(_)
+            | Stage::Insert(_)
+            | Stage::Update(_) => self,
             // Only consider the LHS for EquiJoins since the RHS must
             // remain as just a collection source.
             Stage::MqlIntrinsic(MqlStage::EquiJoin(s)) => {
@@ -270,6 +283,13 @@ impl Optimizer for StageMovementOptimizer {
 
 impl StageMovementOptimizer {
     fn move_stages(st: Stage, schema_state: &SchemaInferenceState) -> (Stage, bool) {
+        match st {
+            Stage::Delete(_) | Stage::Update(_) => {
+                // We do not move stages above writes.
+                return (st, false);
+            }
+            _ => (),
+        }
         let mut v = StageMovementVisitor {
             schema_state,
             changed: false,
@@ -278,8 +298,26 @@ impl StageMovementOptimizer {
             // This should be invalidated iff we observe a different swap.
             is_filter_filter_only_change: true,
         };
-        let new_stage = v.visit_stage(st);
-        (new_stage, v.changed && !v.is_filter_filter_only_change)
+        match st {
+            // Unlike other writes, an Insert stage can have a subquery as its source, and we want
+            // to optimize that subquery.
+            Stage::Insert(Insert { collection, source }) => {
+                if let ValuesOrSubquery::Subquery(subquery) = source {
+                    let (new_subquery, source_changed) =
+                        StageMovementOptimizer::move_stages(*subquery, schema_state);
+                    let new_insert = Stage::Insert(Insert {
+                        collection,
+                        source: ValuesOrSubquery::Subquery(Box::new(new_subquery)),
+                    });
+                    return (new_insert, source_changed);
+                }
+                (Stage::Insert(Insert { collection, source }), false)
+            }
+            _ => {
+                let new_stage = v.visit_stage(st);
+                (new_stage, v.changed && !v.is_filter_filter_only_change)
+            }
+        }
     }
 }
 
@@ -477,6 +515,9 @@ impl StageMovementVisitor<'_> {
             Stage::Collection(_) => (None, None),
             Stage::Array(_) => (None, None),
             Stage::Sentinel => (None, None),
+
+            // Writes
+            Stage::Insert(_) | Stage::Update(_) | Stage::Delete(_) => (None, None),
         }
     }
 

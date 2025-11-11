@@ -218,23 +218,24 @@ impl CachedSchema for Stage {
         }
     }
 
-    fn get_cache(&self) -> &SchemaCache<Self::ReturnType> {
+    fn get_cache(&self) -> Option<&SchemaCache<Self::ReturnType>> {
         match self {
-            Stage::Filter(s) => &s.cache,
-            Stage::Project(s) => &s.cache,
-            Stage::Group(s) => &s.cache,
-            Stage::Limit(s) => &s.cache,
-            Stage::Offset(s) => &s.cache,
-            Stage::Sort(s) => &s.cache,
-            Stage::Collection(s) => &s.cache,
-            Stage::Array(s) => &s.cache,
-            Stage::Join(s) => &s.cache,
-            Stage::Set(s) => &s.cache,
-            Stage::Derived(s) => &s.cache,
-            Stage::Unwind(s) => &s.cache,
-            Stage::MqlIntrinsic(MqlStage::EquiJoin(s)) => &s.cache,
-            Stage::MqlIntrinsic(MqlStage::LateralJoin(s)) => &s.cache,
-            Stage::MqlIntrinsic(MqlStage::MatchFilter(s)) => &s.cache,
+            Stage::Filter(s) => Some(&s.cache),
+            Stage::Project(s) => Some(&s.cache),
+            Stage::Group(s) => Some(&s.cache),
+            Stage::Limit(s) => Some(&s.cache),
+            Stage::Offset(s) => Some(&s.cache),
+            Stage::Sort(s) => Some(&s.cache),
+            Stage::Collection(s) => Some(&s.cache),
+            Stage::Array(s) => Some(&s.cache),
+            Stage::Join(s) => Some(&s.cache),
+            Stage::Set(s) => Some(&s.cache),
+            Stage::Derived(s) => Some(&s.cache),
+            Stage::Unwind(s) => Some(&s.cache),
+            Stage::MqlIntrinsic(MqlStage::EquiJoin(s)) => Some(&s.cache),
+            Stage::MqlIntrinsic(MqlStage::LateralJoin(s)) => Some(&s.cache),
+            Stage::MqlIntrinsic(MqlStage::MatchFilter(s)) => Some(&s.cache),
+            Stage::Delete(_) | Stage::Insert(_) | Stage::Update(_) => None,
             Stage::Sentinel => unreachable!(),
         }
     }

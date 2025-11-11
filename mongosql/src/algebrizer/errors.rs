@@ -42,6 +42,11 @@ pub enum Error {
     InvalidUnwindPath,
     InvalidCast(ast::Type),
     InvalidSortKey(mir::Expression),
+
+    // These first three may be relaxed in the future
+    DeleteMustHaveCollectionSource,
+    UpdateMustHaveCollectionSource,
+    InsertMustHaveCollectionSource,
 }
 
 impl From<mir::schema::Error> for Error {
@@ -86,6 +91,11 @@ impl UserError for Error {
             Error::InvalidUnwindPath => 3029,
             Error::InvalidCast(_) => 3030,
             Error::InvalidSortKey(_) => 3034,
+
+            // I don't remember how we are numbering these, so just start at 4000
+            Error::DeleteMustHaveCollectionSource => 4001,
+            Error::UpdateMustHaveCollectionSource => 4002,
+            Error::InsertMustHaveCollectionSource => 4003,
         }
     }
 
@@ -166,6 +176,9 @@ impl UserError for Error {
             Error::InvalidSortKey(_) => {
                 Some("expressions are not allowed in sort key field paths".to_string())
             }
+            Error::DeleteMustHaveCollectionSource => None,
+            Error::UpdateMustHaveCollectionSource => None,
+            Error::InsertMustHaveCollectionSource => None,
         }
     }
 
@@ -199,6 +212,12 @@ impl UserError for Error {
             Error::InvalidCast(ast_type) => format!("invalid CAST target type '{ast_type:?}'"),
             Error::InvalidSortKey(e) =>
                 format!("sort key field path must be a pure field path with no expressions in this context. found {e:?}"),
+            Error::DeleteMustHaveCollectionSource => 
+                "DELETE statements must specify a collection 'FROM', currently not allowing subqueries".to_string(),
+            Error::UpdateMustHaveCollectionSource => 
+                "UPDATE statements must specify a collection datasource, currently not allowing subqueries".to_string(),
+            Error::InsertMustHaveCollectionSource => 
+                "INSERT statements must specify a collection 'INTO', currently not allowing subqueries".to_string(),
         }
     }
 }
