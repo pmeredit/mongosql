@@ -36,7 +36,7 @@ ExpressionOrDefault: ExpressionOrDefault = {
 };
 
 Update: Update = {
-  UPDATE <t:SimpleDatasource> SET <s:CommaPlus<UpdateAssignment>> <w:(WHERE <Expression>)?> =>? Ok(Update{
+  UPDATE <t:Datasource> SET <s:CommaPlus<UpdateAssignment>> <w:(WHERE <Expression>)?> =>? Ok(Update{
     target: t,
     assignments: s,
     where_clause: w,
@@ -52,7 +52,7 @@ UpdateAssignment: UpdateAssignment = {
 };
 
 Delete: Delete = {
-  DELETE FROM <t:SimpleDatasource> <w:(WHERE <Expression>)?> =>? Ok(Delete{
+  DELETE FROM <t:Datasource> <w:(WHERE <Expression>)?> =>? Ok(Delete{
     target: t,
     where_clause: w,
     returning_clause: None,
