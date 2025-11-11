@@ -90,12 +90,12 @@ pub trait CachedSchema {
     /// Get the stored RefCell from the underlying struct this trait is implemented on if it exists.
     /// Some types don't benefit from caching (literal and reference expressions specifically),
     /// so this function returns an Option that may or may not contain a cache.
-    fn get_cache(&self) -> &SchemaCache<Self::ReturnType>;
+    fn get_cache(&self) -> Option<&SchemaCache<Self::ReturnType>>;
 
     /// Get the cached result if the cache exists and it contains a value.
     #[allow(unused)]
     fn get_cached_schema(&self) -> Option<Result<Self::ReturnType, Error>> {
-        match self.get_cache().0.borrow().clone() {
+        match self.get_cache()?.0.borrow().clone() {
             Some(c) => Some(c.result),
             None => None,
         }
@@ -206,8 +206,11 @@ impl CachedSchema for Stage {
 
     /// Cached call to `check_schema()`.
     fn schema(&self, state: &SchemaInferenceState) -> Result<Self::ReturnType, Error> {
+        if self.get_cache().is_none() {
+            return self.check_schema(state);
+        }
         // This mutable borrow of the cache will be released when schema() is complete.
-        let mut cache = self.get_cache().0.borrow_mut();
+        let mut cache = self.get_cache().unwrap().0.borrow_mut();
         match &*cache {
             Some(contents) => contents.result.clone(),
             _ => {
@@ -847,6 +850,8 @@ impl CachedSchema for Stage {
                     max_size: source_result_set.max_size,
                 })
             }
+            // Writes
+            Stage::Update(_) | Stage::Insert(_) | Stage::Delete(_) => todo!(),
             Stage::Sentinel => unreachable!(),
         }
     }
@@ -2049,15 +2054,15 @@ impl TypeAssertionExpr {
 impl CachedSchema for MatchQuery {
     type ReturnType = Schema;
 
-    fn get_cache(&self) -> &SchemaCache<Self::ReturnType> {
-        match self {
+    fn get_cache(&self) -> Option<&SchemaCache<Self::ReturnType>> {
+        Some(match self {
             MatchQuery::Logical(s) => &s.cache,
             MatchQuery::Type(s) => &s.cache,
             MatchQuery::Regex(s) => &s.cache,
             MatchQuery::ElemMatch(s) => &s.cache,
             MatchQuery::Comparison(s) => &s.cache,
             MatchQuery::False(f) => &f.cache,
-        }
+        })
     }
 
     fn check_schema(&self, _: &SchemaInferenceState) -> Result<Self::ReturnType, Error> {
