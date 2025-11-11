@@ -212,7 +212,7 @@ impl PrettyPrint for Update {
     // TODO: returning...
     fn pretty_print(&self) -> Result<String> {
         Ok(format!(
-            "UPDATE {} SET {}{}",
+            "UPDATE {} SET {}{}{}",
             self.target.pretty_print()?,
             self.assignments
                 .iter()
@@ -223,6 +223,12 @@ impl PrettyPrint for Update {
                 .as_ref()
                 .map_or(Ok("".to_string()), |x| Ok(format!(
                     " WHERE {}",
+                    x.pretty_print()?
+                )))?,
+            self.returning_clause
+                .as_ref()
+                .map_or(Ok("".to_string()), |x| Ok(format!(
+                    " RETURNING {}",
                     x.pretty_print()?
                 )))?,
         ))
@@ -238,12 +244,18 @@ impl PrettyPrint for UpdateAssignment {
 impl PrettyPrint for Delete {
     fn pretty_print(&self) -> Result<String> {
         Ok(format!(
-            "DELETE FROM {}{}",
+            "DELETE FROM {}{}{}",
             self.target.pretty_print()?,
             self.where_clause
                 .as_ref()
                 .map_or(Ok("".to_string()), |x| Ok(format!(
                     " WHERE {}",
+                    x.pretty_print()?
+                )))?,
+            self.returning_clause
+                .as_ref()
+                .map_or(Ok("".to_string()), |x| Ok(format!(
+                    " RETURNING {}",
                     x.pretty_print()?
                 )))?,
         ))
