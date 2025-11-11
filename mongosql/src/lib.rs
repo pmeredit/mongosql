@@ -151,7 +151,6 @@ pub fn substitute_parameters(
     arguments: &[ast::Expression],
 ) -> Result<ast::Statement> {
     use ast::rewrites::Pass;
-    dbg!(sql);
     let ast = parser::parse_statement(sql)?;
     let pass = ast::rewrites::SubstituteParametersRewritePass::new(arguments);
     Ok(pass.apply_to_statement(ast)?)
