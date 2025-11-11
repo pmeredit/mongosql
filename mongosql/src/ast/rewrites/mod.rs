@@ -73,42 +73,64 @@ pub enum Error {
 
 /// A fallible transformation that can be applied to a query
 pub trait Pass {
+    // apply_to_statement can be overridden to handle statements other than queries
+    // when special treatment is needed.
     fn apply_to_statement(&self, stmt: ast::Statement) -> Result<ast::Statement> {
         match stmt {
             ast::Statement::Query(q) => {
-                let rewritten = self.apply(q)?;
+                let rewritten = self.apply_to_query(q)?;
                 Ok(ast::Statement::Query(rewritten))
             }
+            ast::Statement::Insert(i) => match i.source {
+                ast::InsertSource::Query(q) => {
+                    let rewritten = self.apply_to_query(q)?;
+                    Ok(ast::Statement::Insert(ast::Insert {
+                        source: ast::InsertSource::Query(rewritten),
+                        ..i
+                    }))
+                }
+                _ => Ok(ast::Statement::Insert(i)),
+            },
+            // Sadly we can't apply these passes to just the RETURNING clauses
+            // of UPDATE and DELETE
             _ => Ok(stmt),
         }
     }
-    fn apply(&self, query: ast::Query) -> Result<ast::Query>;
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query>;
+}
+
+const PASSES_LIST: &[&dyn Pass] = &[
+    &ExtendedUnwindRewritePass,
+    &InTupleRewritePass,
+    &SingleTupleRewritePass,
+    &GroupBySelectAliasRewritePass,
+    &AddAliasRewritePass,
+    &PositionalSortKeyRewritePass,
+    &AggregateRewritePass,
+    &SelectRewritePass,
+    &ImplicitFromRewritePass,
+    &TableSubqueryRewritePass,
+    &OptionalParameterRewritePass,
+    &NotComparisonRewritePass,
+    &ScalarFunctionsRewritePass,
+    // WithQueryRewritePass can introduce duplicated queries, so it should be the last pass so
+    // any rewrites that apply in the WithQuery queries are applied only once.
+    &WithQueryRewritePass,
+];
+
+pub fn rewrite_statement(stmt: ast::Statement) -> Result<ast::Statement> {
+    let mut rewritten = stmt;
+    for pass in PASSES_LIST {
+        rewritten = pass.apply_to_statement(rewritten)?;
+    }
+    Ok(rewritten)
 }
 
 /// Rewrite the provided query by applying rewrites as specified in the MongoSql spec.
 pub fn rewrite_query(query: ast::Query) -> Result<ast::Query> {
-    let passes: Vec<&dyn Pass> = vec![
-        &ExtendedUnwindRewritePass,
-        &InTupleRewritePass,
-        &SingleTupleRewritePass,
-        &GroupBySelectAliasRewritePass,
-        &AddAliasRewritePass,
-        &PositionalSortKeyRewritePass,
-        &AggregateRewritePass,
-        &SelectRewritePass,
-        &ImplicitFromRewritePass,
-        &TableSubqueryRewritePass,
-        &OptionalParameterRewritePass,
-        &NotComparisonRewritePass,
-        &ScalarFunctionsRewritePass,
-        // WithQueryRewritePass can introduce duplicated queries, so it should be the last pass so
-        // any rewrites that apply in the WithQuery queries are applied only once.
-        &WithQueryRewritePass,
-    ];
-
     let mut rewritten = query;
-    for pass in passes {
-        rewritten = pass.apply(rewritten)?;
+    for pass in PASSES_LIST {
+        rewritten = pass.apply_to_query(rewritten)?;
     }
     Ok(rewritten)
 }

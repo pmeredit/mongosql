@@ -8,7 +8,7 @@ use crate::ast::{
 pub struct SelectRewritePass;
 
 impl Pass for SelectRewritePass {
-    fn apply(&self, query: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         let mut visitor = SelectRewriteVisitor::default();
         let rewritten = query.walk(&mut visitor);
         match visitor.error {

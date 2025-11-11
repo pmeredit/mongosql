@@ -37,7 +37,7 @@ YEAR",
 );
 
 impl Pass for ScalarFunctionsRewritePass {
-    fn apply(&self, query: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         let mut visitor = ScalarFunctionsVisitor { error: None };
         let ret = query.walk(&mut visitor);
         if let Some(error) = visitor.error {

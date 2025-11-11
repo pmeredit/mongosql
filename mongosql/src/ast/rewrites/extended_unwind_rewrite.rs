@@ -12,7 +12,7 @@ use crate::ast::{
 pub struct ExtendedUnwindRewritePass;
 
 impl Pass for ExtendedUnwindRewritePass {
-    fn apply(&self, query: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         let mut visitor = ExtendedUnwindRewriteVisitor::default();
         let res = query.walk(&mut visitor);
         if let Some(error) = visitor.error {

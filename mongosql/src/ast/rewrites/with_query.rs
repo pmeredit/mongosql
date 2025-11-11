@@ -11,7 +11,7 @@ use std::collections::BTreeMap;
 pub struct WithQueryRewritePass;
 
 impl Pass for WithQueryRewritePass {
-    fn apply(&self, query: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         let mut visitor = WithQueryVisitor;
         Ok(visitor.visit_query(query))
     }

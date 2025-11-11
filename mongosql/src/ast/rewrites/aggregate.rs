@@ -10,7 +10,7 @@ use linked_hash_map::LinkedHashMap;
 pub struct AggregateRewritePass;
 
 impl Pass for AggregateRewritePass {
-    fn apply(&self, query: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         // First, check for improper usage of aggregation functions
         // and return the error if one is found.
         let mut visitor = AggregateUsageCheckVisitor::default();

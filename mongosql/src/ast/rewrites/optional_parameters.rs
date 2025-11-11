@@ -11,7 +11,7 @@ use crate::ast::{
 pub struct OptionalParameterRewritePass;
 
 impl Pass for OptionalParameterRewritePass {
-    fn apply(&self, query: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         let query = query.walk(&mut FlattenOptionVisitor);
         let query = query.walk(&mut UnwindOptionVisitor);
         let query = query.walk(&mut CaseElseVisitor);

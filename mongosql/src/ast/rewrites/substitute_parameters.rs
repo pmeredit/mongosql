@@ -25,7 +25,7 @@ impl<'a> Pass for SubstituteParametersRewritePass<'a> {
         }
     }
 
-    fn apply(&self, ast: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, ast: ast::Query) -> Result<ast::Query> {
         let mut visitor = SubstituteParametersVisitor::new(self.arguments);
         let ret = visitor.visit_query(ast);
         if let Some(error) = visitor.error {

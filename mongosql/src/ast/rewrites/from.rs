@@ -8,7 +8,7 @@ use crate::ast::{
 pub struct ImplicitFromRewritePass;
 
 impl Pass for ImplicitFromRewritePass {
-    fn apply(&self, query: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         let mut visitor = ImplicitFromRewriteVisitor;
         Ok(query.walk(&mut visitor))
     }

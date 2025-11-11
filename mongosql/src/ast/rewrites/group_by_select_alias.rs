@@ -8,7 +8,7 @@ use std::collections::HashMap;
 pub struct GroupBySelectAliasRewritePass;
 
 impl Pass for GroupBySelectAliasRewritePass {
-    fn apply(&self, query: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         let mut visitor = GroupBySelectAliasVisitor;
         let query = visitor.visit_query(query);
         Ok(query)

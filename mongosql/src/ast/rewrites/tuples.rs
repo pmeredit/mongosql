@@ -13,7 +13,7 @@ use crate::ast::{
 pub struct InTupleRewritePass;
 
 impl Pass for InTupleRewritePass {
-    fn apply(&self, query: Query) -> Result<Query> {
+    fn apply_to_query(&self, query: Query) -> Result<Query> {
         let mut visitor = InTupleRewriteVisitor;
         Ok(query.walk(&mut visitor))
     }
@@ -167,7 +167,7 @@ impl Visitor for InTupleRewriteVisitor {
 pub struct SingleTupleRewritePass;
 
 impl Pass for SingleTupleRewritePass {
-    fn apply(&self, query: Query) -> Result<Query> {
+    fn apply_to_query(&self, query: Query) -> Result<Query> {
         Ok(query.walk(&mut SingleTupleRewriteVisitor))
     }
 }

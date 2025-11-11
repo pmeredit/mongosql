@@ -59,10 +59,14 @@ pub fn translate_sql(
     sql_options: SqlOptions,
 ) -> Result<Translation> {
     // parse the query and apply syntactic rewrites
-    let ast = parser::parse_query(sql)?;
-    let ast = ast::rewrites::rewrite_query(ast)?;
+    let ast = parser::parse_statement(sql)?;
+    let ast = ast::rewrites::rewrite_statement(ast)?;
     let select_order = get_select_order(&ast);
 
+    let ast = match ast {
+        ast::Statement::Query(q) => q,
+        _ => todo!(),
+    };
     // construct the algebrizer and use it to build an mir plan
     let algebrizer = Algebrizer::new(
         current_db,
@@ -175,8 +179,15 @@ pub fn substitute_bson_into_parameters(
 }
 
 // get_select_order uses pattern matching to parse the select body from the rewritten AST.
-// Parses both distinct and non-distinct SelectQuery
-pub fn get_select_order(ast: &ast::Query) -> Option<ast::SelectBody> {
+// Parses both distinct and non-distinct SelectQuery 
+fn get_select_order(ast: &ast::Statement) -> Option<ast::SelectBody> {
+    match ast {
+        ast::Statement::Query(q) => get_select_order_from_query(q),
+        _ => None,
+    }
+}
+
+fn get_select_order_from_query(ast: &ast::Query) -> Option<ast::SelectBody> {
     match ast {
         ast::Query::Select(s) => Some(s.select_clause.body.clone()),
         _ => None,

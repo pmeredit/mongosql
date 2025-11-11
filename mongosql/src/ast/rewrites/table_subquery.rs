@@ -9,7 +9,7 @@ use crate::ast::{
 pub struct TableSubqueryRewritePass;
 
 impl Pass for TableSubqueryRewritePass {
-    fn apply(&self, query: ast::Query) -> Result<ast::Query> {
+    fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         Ok(query.walk(&mut TableSubqueryRewriteVisitor))
     }
 }
