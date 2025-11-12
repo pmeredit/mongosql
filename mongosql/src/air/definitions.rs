@@ -131,7 +131,7 @@ pub struct Insert {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum ValuesOrQuery {
-    Values(Expression),
+    Values(Vec<Expression>),
     Query(Box<Stage>),
 }
 

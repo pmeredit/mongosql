@@ -452,32 +452,40 @@ impl<'a> Algebrizer<'a> {
                     todo!("Insert values without columns is not yet supported")
                 };
                 let fields = &ast_node.columns;
-                let mut inserts = UniqueLinkedHashMap::new();
-                for (i, value) in values.into_iter().enumerate() {
-                    let expression = insert_algebrizer.algebrize_expression_or_default(value)?;
-                    // TODO: probably a cleaner way to get the column schema, look later.
-                    let ds_schema = mir::Expression::Reference(mir::ReferenceExpr {
-                        // this clone is unfortunate, TODO reuse less code to avoid this
-                        key: Key::named(datasource_name.as_str(), insert_algebrizer.scope_level),
-                    })
-                    .schema(&insert_algebrizer.schema_inference_state())?;
-                    let column_schema = ds_schema.get_key(&fields[i]).ok_or_else(|| {
-                        Error::InsertAssignmentFieldDoesNotExistInColumn(
-                            fields[i].clone(),
-                            datasource_name.clone(),
-                        )
-                    })?;
-                    let expression_schema =
-                        expression.schema(&insert_algebrizer.schema_inference_state())?;
-                    if expression_schema.satisfies(column_schema) != Satisfaction::Must {
-                        return Err(Error::InsertAssignmentExpressionSchemaDoesNotMatchColumn(
-                            Box::new(expression_schema),
-                            Box::new(column_schema.clone()),
-                        ));
+                let mut inserts = Vec::with_capacity(values.len());
+                let mut insert = UniqueLinkedHashMap::new();
+                for values in values.into_iter() {
+                    for (i, value) in values.into_iter().enumerate() {
+                        let expression =
+                            insert_algebrizer.algebrize_expression_or_default(value)?;
+                        // TODO: probably a cleaner way to get the column schema, look later.
+                        let ds_schema = mir::Expression::Reference(mir::ReferenceExpr {
+                            // this clone is unfortunate, TODO reuse less code to avoid this
+                            key: Key::named(
+                                datasource_name.as_str(),
+                                insert_algebrizer.scope_level,
+                            ),
+                        })
+                        .schema(&insert_algebrizer.schema_inference_state())?;
+                        let column_schema = ds_schema.get_key(&fields[i]).ok_or_else(|| {
+                            Error::InsertAssignmentFieldDoesNotExistInColumn(
+                                fields[i].clone(),
+                                datasource_name.clone(),
+                            )
+                        })?;
+                        let expression_schema =
+                            expression.schema(&insert_algebrizer.schema_inference_state())?;
+                        if expression_schema.satisfies(column_schema) != Satisfaction::Must {
+                            return Err(Error::InsertAssignmentExpressionSchemaDoesNotMatchColumn(
+                                Box::new(expression_schema),
+                                Box::new(column_schema.clone()),
+                            ));
+                        }
+                        insert.insert(fields[i].clone(), expression).map_err(|_| {
+                            Error::DuplicateInsertAssignmentField(fields[i].clone())
+                        })?;
                     }
-                    inserts
-                        .insert(fields[i].clone(), expression)
-                        .map_err(|_| Error::DuplicateInsertAssignmentField(fields[i].clone()))?;
+                    inserts.push(insert);
                 }
                 let collection = if let mir::Stage::Collection(c) = collection {
                     Box::new(c)

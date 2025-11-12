@@ -189,11 +189,18 @@ impl PrettyPrint for InsertSource {
     fn pretty_print(&self) -> Result<String> {
         match self {
             InsertSource::Values(v) => Ok(format!(
-                "VALUES ({})",
+                "VALUES {}",
                 v.iter()
-                    .map(|x| x.pretty_print())
+                    .map(|outer_vec| Ok(format!(
+                        "({})",
+                        outer_vec
+                            .iter()
+                            .map(|x| x.pretty_print())
+                            .collect::<Result<Vec<_>>>()?
+                            .join(", ")
+                    )))
                     .collect::<Result<Vec<_>>>()?
-                    .join(", ")
+                    .join("")
             )),
             InsertSource::Query(q) => q.pretty_print(),
         }

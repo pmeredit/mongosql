@@ -101,7 +101,11 @@ impl MqlTranslator {
 
         match mir_insert.source {
             ValuesOrQuery::Values(values) => {
-                let source = air::ValuesOrQuery::Values(self.translate_document(values)?);
+                let source: Result<Vec<_>> = values
+                    .into_iter()
+                    .map(|x| Ok(self.translate_document(x)?))
+                    .collect();
+                let source = air::ValuesOrQuery::Values(source?);
                 Ok(air::Stage::Insert(air::Insert {
                     collection: air::Collection {
                         db: mir_insert.collection.db,

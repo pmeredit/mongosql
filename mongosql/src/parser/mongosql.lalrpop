@@ -16,11 +16,11 @@ pub Statement: Statement = {
 };
 
 Insert: Insert = {
- INSERT INTO <t:SimpleDatasource> <c:(COLUMNS LEFT_PAREN CommaPlus<Identifier> RIGHT_PAREN)?> VALUE LEFT_PAREN <s:CommaPlus<ExpressionOrDefault>> RIGHT_PAREN =>? 
+ INSERT INTO <t:SimpleDatasource> <c:(COLUMNS LEFT_PAREN CommaPlus<Identifier> RIGHT_PAREN)?> VALUE <v: Values> =>? 
  Ok(Insert{
     target: t,
     columns: if let Some((_,_,v,_)) = c { v } else { vec![] },
-    source: InsertSource::Values(s),
+    source: InsertSource::Values(v),
   }),
  INSERT INTO <t:SimpleDatasource> <c:(COLUMNS LEFT_PAREN CommaPlus<Identifier> RIGHT_PAREN)?> <q:Query> =>? 
  Ok(Insert{
@@ -29,6 +29,14 @@ Insert: Insert = {
     source: InsertSource::Query(q),
   })
 };
+
+Values: Vec<Vec<ExpressionOrDefault>> = {
+  SpacePlus<Value>
+};
+
+Value: Vec<ExpressionOrDefault> = {
+  LEFT_PAREN <e:CommaPlus<ExpressionOrDefault>> RIGHT_PAREN => e
+}
 
 ExpressionOrDefault: ExpressionOrDefault = {
   DEFAULT => ExpressionOrDefault::Default,
@@ -819,6 +827,15 @@ CommaPlus<T>: Vec<T> = {
 // PeriodPlus matches <T>+ (1 or more instances of type T) separated by periods.
 PeriodPlus<T>: Vec<T> = { // (1)
     <v:(<T> DOT)*> <e:T> => { // (2)
+       let mut v = v;
+       v.push(e);
+       v
+    }
+};
+
+// SpacePlus matches <T>+ (1 or more instances of type T) separated by space.
+SpacePlus<T>: Vec<T> = { // (1)
+    <v:(<T>)*> <e:T> => { // (2)
        let mut v = v;
        v.push(e);
        v

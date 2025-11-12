@@ -35,7 +35,7 @@ pub struct Insert {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum InsertSource {
-    Values(Vec<ExpressionOrDefault>),
+    Values(Vec<Vec<ExpressionOrDefault>>),
     Query(Query),
 }
 
