@@ -13,6 +13,11 @@ use crate::ast::{
 pub struct AddAliasRewritePass;
 
 impl Pass for AddAliasRewritePass {
+    fn apply_to_statement(&self, stmt: ast::Statement) -> Result<ast::Statement> {
+        let mut visitor = AddAliasRewriteVisitor::default();
+        Ok(stmt.walk(&mut visitor))
+    }
+
     fn apply_to_query(&self, query: ast::Query) -> Result<ast::Query> {
         let mut visitor = AddAliasRewriteVisitor::default();
         Ok(query.walk(&mut visitor))

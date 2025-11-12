@@ -326,13 +326,16 @@ impl<'a> Algebrizer<'a> {
     }
 
     pub fn algebrize_delete_statement(&self, ast_node: ast::Delete) -> Result<mir::Stage> {
-        let from_stage = self.algebrize_datasource(ast_node.target)?;
-        let from_result_set = from_stage.schema(&self.schema_inference_state())?;
-        let collection = if let mir::Stage::Collection(c) = from_stage {
-            Box::new(c)
+        let collection = if let ast::Datasource::Collection(c) = ast_node.target {
+            mir::Stage::Collection(mir::Collection {
+                db: c.database.unwrap_or_else(|| self.current_db.to_string()),
+                collection: c.collection.clone(),
+                cache: SchemaCache::new(),
+            })
         } else {
             return Err(Error::DeleteMustHaveCollectionSource);
         };
+        let from_result_set = collection.schema(&self.schema_inference_state())?;
         let delete_algebrizer = self
             .clone()
             .with_merged_mappings(from_result_set.schema_env)?;
@@ -342,6 +345,11 @@ impl<'a> Algebrizer<'a> {
             ))
         } else {
             None
+        };
+        let collection = if let mir::Stage::Collection(c) = collection {
+            Box::new(c)
+        } else {
+            unreachable!()
         };
         schema_check_return!(
             self,

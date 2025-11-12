@@ -21,7 +21,10 @@ pub enum Stage {
     Documents(Documents),
     EquiJoin(EquiJoin),
     EquiLookup(EquiLookup),
-    Sentinel
+    Sentinel,
+
+    // Writes
+    Delete(Delete)
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -103,6 +106,12 @@ pub struct Sort {
 pub enum SortSpecification {
     Asc(String),
     Desc(String),
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Delete {
+    pub collection: Collection,
+    pub condition: Option<Box<Expression>>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]

@@ -18,7 +18,7 @@ pub mod json_schema;
 mod mapping_registry;
 pub mod options;
 mod parser;
-pub use parser::{parse_query, parse_statement};
+pub use parser::parse_statement;
 pub mod result;
 pub mod schema;
 #[cfg(test)]
@@ -40,11 +40,25 @@ use crate::{
 };
 use std::collections::{BTreeMap, BTreeSet};
 
+
+#[derive(PartialEq, Debug)]
+pub enum OperationType {
+    Find,
+    Aggregate,
+    DeleteMany,
+    DeleteOne,
+    UpdateMany,
+    UpdateOne,
+    InsertMany,
+    InsertOne,
+}
+
 /// Contains all the information needed to execute the Mql translation of a Sql query.
 #[derive(Debug)]
 pub struct Translation {
     pub target_db: String,
     pub target_collection: Option<String>,
+    pub operation_type: OperationType,
     pub pipeline: bson::Bson,
     pub result_set_schema: json_schema::Schema,
     pub select_order: Vec<Vec<String>>,
@@ -100,6 +114,7 @@ pub fn translate_sql(
 
     // codegen the plan into Mql
     let mql_translation = codegen::generate_mql(agg_plan)?;
+    let operation_type = mql_translation.operation_type;
 
     // A non-empty database value is needed for ADF
     let target_db = mql_translation
@@ -125,6 +140,7 @@ pub fn translate_sql(
     Ok(Translation {
         target_db,
         target_collection,
+        operation_type,
         pipeline,
         result_set_schema,
         select_order,
@@ -135,7 +151,7 @@ pub fn get_namespaces(
     current_db: &str,
     sql: &str,
 ) -> Result<BTreeSet<agg_ast::definitions::Namespace>> {
-    let ast = parser::parse_query(sql)?;
+    let ast = parser::parse_statement(sql)?;
     let namespaces = ast::visitors::get_collection_sources(ast)
         .into_iter()
         .map(|cs| agg_ast::definitions::Namespace {

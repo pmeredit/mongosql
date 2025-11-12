@@ -21,6 +21,7 @@ impl Stage {
             Stage::EquiJoin(j) => j.source.clone(),
             Stage::EquiLookup(l) => l.source.clone(),
             Stage::Sentinel => Box::new(self.clone()),
+            Stage::Delete(_) => Box::new(self.clone()),
         }
     }
 
@@ -43,6 +44,7 @@ impl Stage {
             Stage::EquiJoin(j) => j.source = new_source,
             Stage::EquiLookup(l) => l.source = new_source,
             Stage::Sentinel => {}
+            Stage::Delete(_) => {}
         }
     }
 }

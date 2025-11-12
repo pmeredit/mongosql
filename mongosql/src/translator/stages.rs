@@ -31,7 +31,7 @@ impl MqlTranslator {
             // Writes
             mir::Stage::Insert(_) => todo!(),
             mir::Stage::Update(_) => todo!(),
-            mir::Stage::Delete(_) => todo!(),
+            mir::Stage::Delete(d) => self.translate_delete(d),
 
             mir::Stage::Sentinel => unreachable!(),
         }
@@ -47,6 +47,26 @@ impl MqlTranslator {
                 expr: Box::new(expr_translation),
             },
         )))
+    }
+
+    fn translate_delete(&mut self, mir_delete: mir::Delete) -> Result<air::Stage> {
+        self.mapping_registry.insert(
+            Key::named(&mir_delete.collection.collection, self.scope_level),
+            MqlMappingRegistryValue::new(ROOT_NAME.to_string(), MqlReferenceType::Variable),
+        );
+
+        let condition = if let Some(cond) = mir_delete.condition {
+            Some(Box::new(self.translate_expression(*cond)?))
+        } else {
+            None
+        };
+        Ok(air::Stage::Delete(air::Delete {
+            collection: air::Collection {
+                db: mir_delete.collection.db,
+                collection: mir_delete.collection.collection,
+            },
+            condition,
+        }))
     }
 
     fn translate_project(&mut self, mir_project: mir::Project) -> Result<air::Stage> {

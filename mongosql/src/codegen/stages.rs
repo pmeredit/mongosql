@@ -1,6 +1,7 @@
 use crate::{
     air::{self, AggregationFunction, ProjectItem},
     codegen::{MqlCodeGenerator, MqlTranslation, Result},
+    OperationType,
 };
 use bson::{bson, doc, Bson};
 
@@ -23,6 +24,9 @@ impl MqlCodeGenerator {
             air::Stage::Documents(d) => self.codegen_documents(d),
             air::Stage::EquiJoin(j) => self.codegen_equijoin(j),
             air::Stage::EquiLookup(l) => self.codegen_equilookup(l),
+            // writes
+            air::Stage::Delete(d) => self.codegen_delete(d),
+
             air::Stage::Sentinel => unreachable!(),
         }
     }
@@ -43,6 +47,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -68,6 +73,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -91,6 +97,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -107,6 +114,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -120,6 +128,22 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
+            pipeline,
+        })
+    }
+
+    fn codegen_delete(&self, air_delete: air::Delete) -> Result<MqlTranslation> {
+        let pipeline = if let Some(condition) = air_delete.condition {
+            vec![doc! { "$expr": self.codegen_expression(*condition)?}]
+        } else {
+            vec![]
+        };
+
+        Ok(MqlTranslation {
+            database: Some(air_delete.collection.db),
+            collection: Some(air_delete.collection.collection),
+            operation_type: OperationType::DeleteMany,
             pipeline,
         })
     }
@@ -133,6 +157,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: None,
             collection: None,
+            operation_type: OperationType::Aggregate,
             pipeline: vec![doc! {"$documents": Bson::Array(docs)}],
         })
     }
@@ -141,6 +166,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: Some(air_coll.db),
             collection: Some(air_coll.collection),
+            operation_type: OperationType::Aggregate,
             pipeline: vec![],
         })
     }
@@ -178,6 +204,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -194,6 +221,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -221,6 +249,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -266,6 +295,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -314,6 +344,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -325,6 +356,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -336,6 +368,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }
@@ -426,6 +459,7 @@ impl MqlCodeGenerator {
         Ok(MqlTranslation {
             database: source_translation.database,
             collection: source_translation.collection,
+            operation_type: OperationType::Aggregate,
             pipeline,
         })
     }

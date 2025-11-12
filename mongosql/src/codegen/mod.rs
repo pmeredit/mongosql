@@ -1,5 +1,5 @@
-use crate::air;
 pub use crate::mapping_registry::MqlMappingRegistry;
+use crate::{air, OperationType};
 use thiserror::Error;
 
 #[cfg(test)]
@@ -27,6 +27,7 @@ pub enum Error {
 pub struct MqlTranslation {
     pub database: Option<String>,
     pub collection: Option<String>,
+    pub operation_type: OperationType,
     pub pipeline: Vec<bson::Document>,
 }
 

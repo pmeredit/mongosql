@@ -851,7 +851,46 @@ impl CachedSchema for Stage {
                 })
             }
             // Writes
-            Stage::Update(_) | Stage::Insert(_) | Stage::Delete(_) => todo!(),
+            Stage::Delete(d) => {
+                let schema =
+                    match state
+                        .catalog
+                        .get_schema_for_namespace(&agg_ast::definitions::Namespace {
+                            database: d.collection.db.clone(),
+                            collection: d.collection.collection.clone(),
+                        }) {
+                        Some(s) => s.clone(),
+                        None => {
+                            return Err(Error::CollectionNotFound(
+                                d.collection.db.clone(),
+                                d.collection.collection.clone(),
+                            ))
+                        }
+                    };
+                let schema_env = map! {
+                        (d.collection.collection.clone(), state.scope_level).into() => schema,
+                };
+                let state = state.with_merged_schema_env(schema_env);
+                if let Some(cond) = &d.condition {
+                    // If there is a condition, schema check it.
+                    let cond_schema = cond.schema(&state)?;
+                    if !state.check_satisfies(&cond_schema, &BOOLEAN_OR_NULLISH) {
+                        return Err(Error::SchemaChecking {
+                            name: "delete condition",
+                            required: BOOLEAN_OR_NULLISH.clone().into(),
+                            found: cond_schema.into(),
+                        });
+                    }
+                }
+                // There really is no ResultSet for a delete stage,
+                // but we need to return something. Perhaps change this later
+                Ok(ResultSet {
+                    schema_env: state.env,
+                    min_size: 0,
+                    max_size: Some(0),
+                })
+            }
+            Stage::Update(_) | Stage::Insert(_) => todo!(),
             Stage::Sentinel => unreachable!(),
         }
     }

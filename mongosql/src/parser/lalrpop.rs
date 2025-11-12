@@ -141,11 +141,6 @@ pub fn parse_statement(input: &str) -> Result<ast::Statement> {
     Ok(STATEMENT_PARSER.parse(&mut param_count, input)?)
 }
 
-pub fn parse_query(input: &str) -> Result<ast::Query> {
-    let mut param_count = 0usize;
-    Ok(QUERY_PARSER.parse(&mut param_count, input)?)
-}
-
 #[cfg(test)]
 pub fn parse_expression(input: &str) -> Result<ast::Expression> {
     let mut param_count = 0usize;

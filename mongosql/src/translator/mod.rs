@@ -83,10 +83,16 @@ impl MqlTranslator {
     /// it will set up a ReplaceWith to replace __bot with the empty key: ''.
     pub fn translate_plan(&mut self, mir_stage: mir::Stage) -> Result<air::Stage> {
         let source = self.translate_stage(mir_stage)?;
-        if self.sql_options.exclude_namespaces == ExcludeNamespacesOption::ExcludeNamespaces {
-            self.append_unnest_stage(source)
-        } else {
-            self.append_name_replacements(source)
+        match source {
+            air::Stage::Delete(_) => Ok(source),
+            _ => {
+                if self.sql_options.exclude_namespaces == ExcludeNamespacesOption::ExcludeNamespaces
+                {
+                    self.append_unnest_stage(source)
+                } else {
+                    self.append_name_replacements(source)
+                }
+            }
         }
     }
 

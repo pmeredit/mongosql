@@ -132,8 +132,8 @@ fn main() -> Result<(), CliError> {
         let schema = serde_json::to_string_pretty(&translation.result_set_schema)
             .map_err(|e| CliError(e.to_string()))?;
         println!(
-            "target_db: {},\ntarget_collection: {:?},\nresult set schema:\n{}\npipeline:\n[",
-            translation.target_db, translation.target_collection, schema
+            "target_db: {},\ntarget_collection: {:?},\nresult set schema:\n{}\noperation type:\n{:?}\npipeline:\n[",
+            translation.target_db, translation.target_collection, schema, translation.operation_type
         );
         let bson::Bson::Array(pipeline) = pipeline else {
             return Err(CliError("pipeline is not an array".to_string()));
@@ -172,8 +172,18 @@ fn run_query_and_display_results(
         .ok_or_else(|| CliError("Pipeline contains non-Document!".to_string()))?;
     let results = if let Some(target_collection) = translation.target_collection {
         let collection: Collection<Document> = db.collection(target_collection.as_str());
-        let cursor = collection.aggregate(pipeline).run();
-        cursor?
+        match translation.operation_type {
+            mongosql::OperationType::DeleteMany => {
+                let delete_result = collection.delete_many(pipeline[0].clone()).run()?;
+                println!("Deleted {} documents.", delete_result.deleted_count);
+                return Ok(());
+            }
+            mongosql::OperationType::Aggregate => {
+                let cursor = collection.aggregate(pipeline).run();
+                cursor?
+            }
+            _ => todo!(),
+        }
     } else {
         let cursor = db.aggregate(pipeline).run();
         cursor?
