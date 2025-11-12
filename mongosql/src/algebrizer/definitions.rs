@@ -453,8 +453,8 @@ impl<'a> Algebrizer<'a> {
                 };
                 let fields = &ast_node.columns;
                 let mut inserts = Vec::with_capacity(values.len());
-                let mut insert = UniqueLinkedHashMap::new();
                 for values in values.into_iter() {
+                    let mut insert = UniqueLinkedHashMap::new();
                     for (i, value) in values.into_iter().enumerate() {
                         let expression =
                             insert_algebrizer.algebrize_expression_or_default(value)?;

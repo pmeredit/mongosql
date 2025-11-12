@@ -3,7 +3,7 @@ use crate::{
     codegen::{MqlCodeGenerator, MqlTranslation, Result},
     OperationType,
 };
-use bson::{bson, doc, Bson};
+use bson::{bson, doc, Bson, Document};
 
 impl MqlCodeGenerator {
     pub fn codegen_stage(&self, stage: air::Stage) -> Result<MqlTranslation> {
@@ -174,17 +174,22 @@ impl MqlCodeGenerator {
                 let codegenerator = MqlCodeGenerator {
                     no_literal_wrap: true,
                 };
-                let insert_doc = codegenerator.codegen_expression(value)?;
-                if let Bson::Document(d) = insert_doc {
-                    Ok(MqlTranslation {
-                        database: Some(air_insert.collection.db),
-                        collection: Some(air_insert.collection.collection),
-                        operation_type: OperationType::InsertMany,
-                        pipeline: vec![d],
+                let pipeline = value
+                    .into_iter()
+                    .map(|x| {
+                        if let Bson::Document(d) = codegenerator.codegen_expression(x)? {
+                            Ok(d)
+                        } else {
+                            unreachable!("Insert values must be a document, this means a bug in the algebrizer");
+                        }
                     })
-                } else {
-                    unreachable!("Insert values must be a document");
-                }
+                    .collect::<Result<Vec<Document>>>()?;
+                Ok(MqlTranslation {
+                    database: Some(air_insert.collection.db),
+                    collection: Some(air_insert.collection.collection),
+                    operation_type: OperationType::InsertMany,
+                    pipeline,
+                })
             }
             air::ValuesOrQuery::Query(stage) => {
                 let mut stage_translation = self.codegen_stage(*stage)?;
