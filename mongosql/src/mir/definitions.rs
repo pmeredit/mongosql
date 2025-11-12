@@ -74,7 +74,8 @@ pub struct Insert {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum ValuesOrQuery {
-    Values(Vec<DocumentExpr>),
+    // For now we only support inserting on document
+    Values(UniqueLinkedHashMap<String, Expression>),
     Query(Box<Stage>),
 }
 

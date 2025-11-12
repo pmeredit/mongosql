@@ -429,7 +429,7 @@ impl<'a> Algebrizer<'a> {
     }
 
     pub fn algebrize_insert_statement(&self, ast_node: ast::Insert) -> Result<mir::Stage> {
-        let (collection, _datasource_name) = if let ast::Datasource::Collection(c) = ast_node.target
+        let (collection, datasource_name) = if let ast::Datasource::Collection(c) = ast_node.target
         {
             (
                 mir::Stage::Collection(mir::Collection {
@@ -443,17 +443,63 @@ impl<'a> Algebrizer<'a> {
             return Err(Error::InsertMustHaveCollectionSource);
         };
         match ast_node.source {
-            ast::InsertSource::Values(_values) => {
-                todo!();
-            }
-            ast::InsertSource::Query(query) => Ok(mir::Stage::Insert(mir::Insert {
-                collection: if let mir::Stage::Collection(c) = collection {
+            ast::InsertSource::Values(values) => {
+                let from_result_set = collection.schema(&self.schema_inference_state())?;
+                let insert_algebrizer = self
+                    .clone()
+                    .with_merged_mappings(from_result_set.schema_env)?;
+                if ast_node.columns.is_empty() {
+                    todo!("Insert values without columns is not yet supported")
+                };
+                let fields = &ast_node.columns;
+                let mut inserts = UniqueLinkedHashMap::new();
+                for (i, value) in values.into_iter().enumerate() {
+                    let expression = insert_algebrizer.algebrize_expression_or_default(value)?;
+                    // TODO: probably a cleaner way to get the column schema, look later.
+                    let ds_schema = mir::Expression::Reference(mir::ReferenceExpr {
+                        // this clone is unfortunate, TODO reuse less code to avoid this
+                        key: Key::named(datasource_name.as_str(), insert_algebrizer.scope_level),
+                    })
+                    .schema(&insert_algebrizer.schema_inference_state())?;
+                    let column_schema = ds_schema.get_key(&fields[i]).ok_or_else(|| {
+                        Error::InsertAssignmentFieldDoesNotExistInColumn(
+                            fields[i].clone(),
+                            datasource_name.clone(),
+                        )
+                    })?;
+                    let expression_schema =
+                        expression.schema(&insert_algebrizer.schema_inference_state())?;
+                    if expression_schema.satisfies(column_schema) != Satisfaction::Must {
+                        return Err(Error::InsertAssignmentExpressionSchemaDoesNotMatchColumn(
+                            Box::new(expression_schema),
+                            Box::new(column_schema.clone()),
+                        ));
+                    }
+                    inserts
+                        .insert(fields[i].clone(), expression)
+                        .map_err(|_| Error::DuplicateInsertAssignmentField(fields[i].clone()))?;
+                }
+                let collection = if let mir::Stage::Collection(c) = collection {
                     Box::new(c)
                 } else {
                     unreachable!()
-                },
-                source: mir::ValuesOrQuery::Query(Box::new(self.algebrize_query(query)?)),
-            })),
+                };
+                Ok(mir::Stage::Insert(mir::Insert {
+                    collection,
+                    source: mir::ValuesOrQuery::Values(inserts),
+                }))
+            }
+            ast::InsertSource::Query(query) => {
+                let collection = if let mir::Stage::Collection(c) = collection {
+                    Box::new(c)
+                } else {
+                    unreachable!()
+                };
+                Ok(mir::Stage::Insert(mir::Insert {
+                    collection,
+                    source: mir::ValuesOrQuery::Query(Box::new(self.algebrize_query(query)?)),
+                }))
+            }
         }
     }
 

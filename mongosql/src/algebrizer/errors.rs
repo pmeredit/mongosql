@@ -59,6 +59,17 @@ pub enum Error {
         String,
         String,
     ),
+
+    InsertAssignmentExpressionSchemaDoesNotMatchColumn(
+        Box<crate::schema::Schema>,
+        Box<crate::schema::Schema>,
+    ),
+
+    DuplicateInsertAssignmentField(String),
+    InsertAssignmentFieldDoesNotExistInColumn(
+        String,
+        String,
+    ),
 }
 
 impl From<mir::schema::Error> for Error {
@@ -112,6 +123,10 @@ impl UserError for Error {
             Error::UpdateAssignmentExpressionSchemaDoesNotMatchColumn(_, _) => 4004,
             Error::DuplicateUpdateAssignmentField(_) => 4005,
             Error::UpdateAssignmentFieldDoesNotExistInColumn(_, _) => 4006,
+
+            Error::InsertAssignmentExpressionSchemaDoesNotMatchColumn(_, _) => 4007,
+            Error::DuplicateInsertAssignmentField(_) => 4008,
+            Error::InsertAssignmentFieldDoesNotExistInColumn(_, _) => 4009,
         }
     }
 
@@ -198,6 +213,9 @@ impl UserError for Error {
             Error::UpdateAssignmentExpressionSchemaDoesNotMatchColumn(_, _) => None,
             Error::DuplicateUpdateAssignmentField(_) => None,
             Error::UpdateAssignmentFieldDoesNotExistInColumn(_, _) => None,
+            Error::InsertAssignmentExpressionSchemaDoesNotMatchColumn(_, _) => None,
+            Error::DuplicateInsertAssignmentField(_) => None,
+            Error::InsertAssignmentFieldDoesNotExistInColumn(_, _) => None,
         }
     }
 
@@ -243,6 +261,12 @@ impl UserError for Error {
                 format!("found duplicate UPDATE assignment field '{field}'"),
             Error::UpdateAssignmentFieldDoesNotExistInColumn(field, datasource_name) => 
                 format!("UPDATE assignment field '{field}' does not exist in target datasource '{datasource_name}'"),
+            Error::InsertAssignmentExpressionSchemaDoesNotMatchColumn(expr_schema, column_schema) => 
+                format!("INSERT assignment expression schema {expr_schema:?} does not match target column schema {column_schema:?}"),
+            Error::DuplicateInsertAssignmentField(field) => 
+                format!("found duplicate INSERT column '{field}'"),
+            Error::InsertAssignmentFieldDoesNotExistInColumn(field, datasource_name) => 
+                format!("INSERT column '{field}' does not exist in target datasource '{datasource_name}'"),
         }
     }
 }

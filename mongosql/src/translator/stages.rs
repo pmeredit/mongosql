@@ -104,8 +104,9 @@ impl MqlTranslator {
                 todo!()
             }
             ValuesOrQuery::Query(ref subquery) => {
-                let source =
-                    air::ValuesOrQuery::Query(Box::new(self.translate_stage(*subquery.clone())?));
+                let query = self.translate_stage(*subquery.clone())?;
+                let query = self.append_unnest_stage(query)?;
+                let source = air::ValuesOrQuery::Query(Box::new(query));
 
                 Ok(air::Stage::Insert(air::Insert {
                     collection: air::Collection {
