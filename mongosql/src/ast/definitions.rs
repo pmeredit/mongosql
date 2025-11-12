@@ -56,7 +56,7 @@ pub struct Update {
 #[derive(PartialEq, Debug, Clone)]
 pub struct UpdateAssignment {
     pub field: String,
-    pub value: Expression,
+    pub value: ExpressionOrDefault,
 }
 
 #[derive(PartialEq, Debug, Clone)]

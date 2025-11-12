@@ -388,7 +388,7 @@ impl<'a> Algebrizer<'a> {
         };
         let mut assignments = UniqueLinkedHashMap::new();
         for assignment in ast_node.assignments.into_iter() {
-            let expression = update_algebrizer.algebrize_expression(assignment.value, false)?;
+            let expression = update_algebrizer.algebrize_expression_or_default(assignment.value)?;
             // TODO: probably a cleaner way to get the column schema, look later.
             let ds_schema = mir::Expression::Reference(mir::ReferenceExpr {
                 // this clone is unfortunate, TODO reuse less code to avoid this
@@ -1441,6 +1441,20 @@ impl<'a> Algebrizer<'a> {
         };
 
         Ok(mir_node)
+    }
+
+    pub fn algebrize_expression_or_default(
+        &self,
+        ast_node: ast::ExpressionOrDefault,
+    ) -> Result<mir::Expression> {
+        match ast_node {
+            ast::ExpressionOrDefault::Expression(e) => self.algebrize_expression(e, false),
+            // For now we can only support NULL as a default value, since we don't have defaults
+            // in our table/schemas definitions
+            ast::ExpressionOrDefault::Default => {
+                Ok(mir::Expression::Literal(mir::LiteralValue::Null))
+            }
+        }
     }
 
     pub fn algebrize_expression(

@@ -45,7 +45,7 @@ Update: Update = {
 };
 
 UpdateAssignment: UpdateAssignment = {
-  <i:Identifier> EQ <v:Expression> => UpdateAssignment{
+  <i:Identifier> EQ <v:ExpressionOrDefault> => UpdateAssignment{
     field: i,
     value: v,
   }
