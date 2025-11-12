@@ -165,7 +165,7 @@ fn run_query_and_display_results(
     let bson::Bson::Array(pipeline) = translation.pipeline else {
         return Err(CliError("pipeline is not an array".to_string()));
     };
-    let pipeline = pipeline
+    let mut pipeline = pipeline
         .into_iter()
         .map(|doc| doc.as_document().map(|doc| doc.to_owned()))
         .collect::<Option<Vec<Document>>>()
@@ -177,10 +177,27 @@ fn run_query_and_display_results(
                 let filter = if pipeline.is_empty() {
                     doc! {}
                 } else {
-                    pipeline[0].clone()
+                    pipeline.swap_remove(0)
                 };
                 let delete_result = collection.delete_many(filter).run()?;
                 println!("Deleted {} documents.", delete_result.deleted_count);
+                return Ok(());
+            }
+            mongosql::OperationType::UpdateMany => {
+                let (filter, update) = match pipeline.len() {
+                    2 => {(pipeline.swap_remove(0), pipeline)},
+                    1 => {(doc! {}, pipeline)},
+                    _ => {
+                        return Err(CliError(
+                            "UpdateMany pipeline must have 1 or 2 documents".to_string(),
+                        ))
+                    }
+                };
+                let update_result = collection.update_many(filter, update).run()?;
+                println!(
+                    "Matched {} documents and modified {} documents.",
+                    update_result.matched_count, update_result.modified_count
+                );
                 return Ok(());
             }
             mongosql::OperationType::Aggregate => {

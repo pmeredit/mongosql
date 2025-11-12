@@ -60,7 +60,7 @@ pub struct Delete {
 #[derive(PartialEq, Debug, Clone)]
 pub struct Update {
     pub collection: Box<Collection>,
-    pub assignments: Vec<DocumentExpr>,
+    pub assignments: UniqueLinkedHashMap<String, Expression>,
     pub condition: Option<Box<Expression>>,
     // no need for schema cache here since UPDATE does not produce output
 }

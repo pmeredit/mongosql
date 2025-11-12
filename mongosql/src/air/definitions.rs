@@ -24,7 +24,8 @@ pub enum Stage {
     Sentinel,
 
     // Writes
-    Delete(Delete)
+    Delete(Delete),
+    Update(Update),
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -112,6 +113,13 @@ pub enum SortSpecification {
 pub struct Delete {
     pub collection: Collection,
     pub condition: Option<Box<Expression>>,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Update {
+    pub collection: Collection,
+    pub condition: Option<Box<Expression>>,
+    pub updates: Expression,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]

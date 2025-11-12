@@ -46,9 +46,9 @@ pub enum OperationType {
     Find,
     Aggregate,
     DeleteMany,
-    DeleteOne,
+    FindAndDeleteOne,
     UpdateMany,
-    UpdateOne,
+    FindAndUpdateOne,
     InsertMany,
     InsertOne,
 }

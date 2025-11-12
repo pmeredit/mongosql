@@ -47,6 +47,18 @@ pub enum Error {
     DeleteMustHaveCollectionSource,
     UpdateMustHaveCollectionSource,
     InsertMustHaveCollectionSource,
+
+    // More writes
+    UpdateAssignmentExpressionSchemaDoesNotMatchColumn(
+        Box<crate::schema::Schema>,
+        Box<crate::schema::Schema>,
+    ),
+
+    DuplicateUpdateAssignmentField(String),
+    UpdateAssignmentFieldDoesNotExistInColumn(
+        String,
+        String,
+    ),
 }
 
 impl From<mir::schema::Error> for Error {
@@ -96,6 +108,10 @@ impl UserError for Error {
             Error::DeleteMustHaveCollectionSource => 4001,
             Error::UpdateMustHaveCollectionSource => 4002,
             Error::InsertMustHaveCollectionSource => 4003,
+
+            Error::UpdateAssignmentExpressionSchemaDoesNotMatchColumn(_, _) => 4004,
+            Error::DuplicateUpdateAssignmentField(_) => 4005,
+            Error::UpdateAssignmentFieldDoesNotExistInColumn(_, _) => 4006,
         }
     }
 
@@ -179,6 +195,9 @@ impl UserError for Error {
             Error::DeleteMustHaveCollectionSource => None,
             Error::UpdateMustHaveCollectionSource => None,
             Error::InsertMustHaveCollectionSource => None,
+            Error::UpdateAssignmentExpressionSchemaDoesNotMatchColumn(_, _) => None,
+            Error::DuplicateUpdateAssignmentField(_) => None,
+            Error::UpdateAssignmentFieldDoesNotExistInColumn(_, _) => None,
         }
     }
 
@@ -218,6 +237,12 @@ impl UserError for Error {
                 "UPDATE statements must specify a collection datasource, currently not allowing subqueries".to_string(),
             Error::InsertMustHaveCollectionSource => 
                 "INSERT statements must specify a collection 'INTO', currently not allowing subqueries".to_string(),
+            Error::UpdateAssignmentExpressionSchemaDoesNotMatchColumn(expr_schema, column_schema) => 
+                format!("UPDATE assignment expression schema {expr_schema:?} does not match target column schema {column_schema:?}"),
+            Error::DuplicateUpdateAssignmentField(field) => 
+                format!("found duplicate UPDATE assignment field '{field}'"),
+            Error::UpdateAssignmentFieldDoesNotExistInColumn(field, datasource_name) => 
+                format!("UPDATE assignment field '{field}' does not exist in target datasource '{datasource_name}'"),
         }
     }
 }

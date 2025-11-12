@@ -30,7 +30,7 @@ impl MqlTranslator {
             mir::Stage::MqlIntrinsic(i) => self.translate_mql_intrinsic(i),
             // Writes
             mir::Stage::Insert(_) => todo!(),
-            mir::Stage::Update(_) => todo!(),
+            mir::Stage::Update(u) => self.translate_update(u),
             mir::Stage::Delete(d) => self.translate_delete(d),
 
             mir::Stage::Sentinel => unreachable!(),
@@ -66,6 +66,30 @@ impl MqlTranslator {
                 collection: mir_delete.collection.collection,
             },
             condition,
+        }))
+    }
+
+    fn translate_update(&mut self, mir_update: mir::Update) -> Result<air::Stage> {
+        self.mapping_registry.insert(
+            Key::named(&mir_update.collection.collection, self.scope_level),
+            MqlMappingRegistryValue::new(ROOT_NAME.to_string(), MqlReferenceType::Variable),
+        );
+
+        let condition = if let Some(cond) = mir_update.condition {
+            Some(Box::new(self.translate_expression(*cond)?))
+        } else {
+            None
+        };
+
+        let updates = self.translate_document(mir_update.assignments)?;
+
+        Ok(air::Stage::Update(air::Update {
+            collection: air::Collection {
+                db: mir_update.collection.db,
+                collection: mir_update.collection.collection,
+            },
+            condition,
+            updates,
         }))
     }
 

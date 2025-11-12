@@ -890,7 +890,13 @@ impl CachedSchema for Stage {
                     max_size: Some(0),
                 })
             }
-            Stage::Update(_) | Stage::Insert(_) => todo!(),
+            // TODO: currently, unused
+            Stage::Update(_) => Ok(ResultSet {
+                schema_env: state.env.clone(),
+                min_size: 0,
+                max_size: Some(0),
+            }),
+            Stage::Insert(_) => todo!(),
             Stage::Sentinel => unreachable!(),
         }
     }

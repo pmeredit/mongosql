@@ -26,6 +26,7 @@ impl MqlCodeGenerator {
             air::Stage::EquiLookup(l) => self.codegen_equilookup(l),
             // writes
             air::Stage::Delete(d) => self.codegen_delete(d),
+            air::Stage::Update(u) => self.codegen_update(u),
 
             air::Stage::Sentinel => unreachable!(),
         }
@@ -144,6 +145,24 @@ impl MqlCodeGenerator {
             database: Some(air_delete.collection.db),
             collection: Some(air_delete.collection.collection),
             operation_type: OperationType::DeleteMany,
+            pipeline,
+        })
+    }
+
+    fn codegen_update(&self, air_update: air::Update) -> Result<MqlTranslation> {
+        let pipeline = if let Some(condition) = air_update.condition {
+            vec![
+                doc! { "$expr": self.codegen_expression(*condition)?},
+                doc! { "$set": self.codegen_expression(air_update.updates)? },
+            ]
+        } else {
+            vec![doc! { "$set": self.codegen_expression(air_update.updates)? }]
+        };
+
+        Ok(MqlTranslation {
+            database: Some(air_update.collection.db),
+            collection: Some(air_update.collection.collection),
+            operation_type: OperationType::UpdateMany,
             pipeline,
         })
     }

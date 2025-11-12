@@ -22,6 +22,7 @@ impl Stage {
             Stage::EquiLookup(l) => l.source.clone(),
             Stage::Sentinel => Box::new(self.clone()),
             Stage::Delete(_) => Box::new(self.clone()),
+            Stage::Update(_) => Box::new(self.clone()),
         }
     }
 
@@ -45,6 +46,7 @@ impl Stage {
             Stage::EquiLookup(l) => l.source = new_source,
             Stage::Sentinel => {}
             Stage::Delete(_) => {}
+            Stage::Update(_) => {}
         }
     }
 }

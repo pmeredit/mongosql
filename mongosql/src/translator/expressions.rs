@@ -190,7 +190,7 @@ impl MqlTranslator {
     /// translate_document translates a document expression. A document
     /// expression is a key-value pair where the key is a string and the
     /// value is an expression.
-    fn translate_document(
+    pub fn translate_document(
         &self,
         mir_document: UniqueLinkedHashMap<String, mir::Expression>,
     ) -> Result<air::Expression> {
