@@ -174,7 +174,12 @@ fn run_query_and_display_results(
         let collection: Collection<Document> = db.collection(target_collection.as_str());
         match translation.operation_type {
             mongosql::OperationType::DeleteMany => {
-                let delete_result = collection.delete_many(pipeline[0].clone()).run()?;
+                let filter = if pipeline.is_empty() {
+                    doc! {}
+                } else {
+                    pipeline[0].clone()
+                };
+                let delete_result = collection.delete_many(filter).run()?;
                 println!("Deleted {} documents.", delete_result.deleted_count);
                 return Ok(());
             }

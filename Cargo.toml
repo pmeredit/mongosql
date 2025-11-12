@@ -2,22 +2,22 @@
 resolver = "2"
 
 members = [
-    "agg-ast/ast",
-    "agg-ast/schema_derivation",
-    "benchmark/pipeline_generator",
-    "benchmark/profiler",
+   # "agg-ast/ast",
+   # "agg-ast/schema_derivation",
+   # "benchmark/pipeline_generator",
+   # "benchmark/profiler",
     "mongosql-cli",
-    "e2e-tests",
-    "evergreen/create-tasks",
+   # "e2e-tests",
+   # "evergreen/create-tasks",
     "mongosql-datastructures",
     "mongosql-c",
     "mongosql",
-    "service",
+   # "service",
     "test-utils",
     "usererrordisplay-impl",
     "visitgen",
     "visitgen-test",
-    "mongosqltranslate",
+   # "mongosqltranslate",
 ]
 
 [workspace.dependencies]
