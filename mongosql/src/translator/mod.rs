@@ -86,6 +86,7 @@ impl MqlTranslator {
         match source {
             air::Stage::Delete(_) => Ok(source),
             air::Stage::Update(_) => Ok(source),
+            air::Stage::Insert(_) => Ok(source),
             _ => {
                 if self.sql_options.exclude_namespaces == ExcludeNamespacesOption::ExcludeNamespaces
                 {

@@ -23,6 +23,7 @@ impl Stage {
             Stage::Sentinel => Box::new(self.clone()),
             Stage::Delete(_) => Box::new(self.clone()),
             Stage::Update(_) => Box::new(self.clone()),
+            Stage::Insert(_) => Box::new(self.clone()),
         }
     }
 
@@ -47,6 +48,7 @@ impl Stage {
             Stage::Sentinel => {}
             Stage::Delete(_) => {}
             Stage::Update(_) => {}
+            Stage::Insert(_) => {}
         }
     }
 }

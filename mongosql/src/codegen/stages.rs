@@ -27,6 +27,7 @@ impl MqlCodeGenerator {
             // writes
             air::Stage::Delete(d) => self.codegen_delete(d),
             air::Stage::Update(u) => self.codegen_update(u),
+            air::Stage::Insert(i) => self.codegen_insert(i),
 
             air::Stage::Sentinel => unreachable!(),
         }
@@ -165,6 +166,22 @@ impl MqlCodeGenerator {
             operation_type: OperationType::UpdateMany,
             pipeline,
         })
+    }
+
+    fn codegen_insert(&self, air_insert: air::Insert) -> Result<MqlTranslation> {
+        match air_insert.source {
+            air::ValuesOrQuery::Values(_docs) => todo!(),
+            air::ValuesOrQuery::Query(stage) => {
+                let mut stage_translation = self.codegen_stage(*stage)?;
+                stage_translation.pipeline.push(doc! {"$merge":
+                { "into":
+                    { "db": air_insert.collection.db, "coll": air_insert.collection.collection },
+                  "whenMatched": "keepExisting",
+                  "whenNotMatched": "insert"
+                }});
+                Ok(stage_translation)
+            }
+        }
     }
 
     fn codegen_documents(&self, air_docs: air::Documents) -> Result<MqlTranslation> {

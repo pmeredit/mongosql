@@ -322,7 +322,7 @@ impl<'a> Algebrizer<'a> {
             ast::Statement::Query(q) => self.algebrize_query(q),
             ast::Statement::Delete(d) => self.algebrize_delete_statement(d),
             ast::Statement::Update(u) => self.algebrize_update_statement(u),
-            _ => todo!(),
+            ast::Statement::Insert(i) => self.algebrize_insert_statement(i),
         }
     }
 
@@ -426,6 +426,35 @@ impl<'a> Algebrizer<'a> {
             condition,
             assignments,
         }))
+    }
+
+    pub fn algebrize_insert_statement(&self, ast_node: ast::Insert) -> Result<mir::Stage> {
+        let (collection, _datasource_name) = if let ast::Datasource::Collection(c) = ast_node.target
+        {
+            (
+                mir::Stage::Collection(mir::Collection {
+                    db: c.database.unwrap_or_else(|| self.current_db.to_string()),
+                    collection: c.collection.clone(),
+                    cache: SchemaCache::new(),
+                }),
+                c.collection,
+            )
+        } else {
+            return Err(Error::InsertMustHaveCollectionSource);
+        };
+        match ast_node.source {
+            ast::InsertSource::Values(_values) => {
+                todo!();
+            }
+            ast::InsertSource::Query(query) => Ok(mir::Stage::Insert(mir::Insert {
+                collection: if let mir::Stage::Collection(c) = collection {
+                    Box::new(c)
+                } else {
+                    unreachable!()
+                },
+                source: mir::ValuesOrQuery::Query(Box::new(self.algebrize_query(query)?)),
+            })),
+        }
     }
 
     pub fn algebrize_query(&self, ast_node: ast::Query) -> Result<mir::Stage> {

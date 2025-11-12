@@ -1,7 +1,7 @@
 use crate::{
     air,
     mapping_registry::{Key, MqlMappingRegistry, MqlMappingRegistryValue, MqlReferenceType},
-    mir,
+    mir::{self, ValuesOrQuery},
     schema::Satisfaction,
     translator::{Error, MqlTranslator, Result},
     util::{ROOT, ROOT_NAME},
@@ -29,7 +29,7 @@ impl MqlTranslator {
             mir::Stage::Unwind(u) => self.translate_unwind(u),
             mir::Stage::MqlIntrinsic(i) => self.translate_mql_intrinsic(i),
             // Writes
-            mir::Stage::Insert(_) => todo!(),
+            mir::Stage::Insert(i) => self.translate_insert(i),
             mir::Stage::Update(u) => self.translate_update(u),
             mir::Stage::Delete(d) => self.translate_delete(d),
 
@@ -91,6 +91,31 @@ impl MqlTranslator {
             condition,
             updates,
         }))
+    }
+
+    fn translate_insert(&mut self, mir_insert: mir::Insert) -> Result<air::Stage> {
+        self.mapping_registry.insert(
+            Key::named(&mir_insert.collection.collection, self.scope_level),
+            MqlMappingRegistryValue::new(ROOT_NAME.to_string(), MqlReferenceType::Variable),
+        );
+
+        match mir_insert.source {
+            ValuesOrQuery::Values(_) => {
+                todo!()
+            }
+            ValuesOrQuery::Query(ref subquery) => {
+                let source =
+                    air::ValuesOrQuery::Query(Box::new(self.translate_stage(*subquery.clone())?));
+
+                Ok(air::Stage::Insert(air::Insert {
+                    collection: air::Collection {
+                        db: mir_insert.collection.db,
+                        collection: mir_insert.collection.collection,
+                    },
+                    source,
+                }))
+            }
+        }
     }
 
     fn translate_project(&mut self, mir_project: mir::Project) -> Result<air::Stage> {

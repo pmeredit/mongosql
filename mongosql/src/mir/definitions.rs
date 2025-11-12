@@ -68,14 +68,14 @@ pub struct Update {
 #[derive(PartialEq, Debug, Clone)]
 pub struct Insert {
     pub collection: Box<Collection>,
-    pub source: ValuesOrSubquery,
+    pub source: ValuesOrQuery,
     // no need for schema cache here since INSERT does not produce output
 }
 
 #[derive(PartialEq, Debug, Clone)]
-pub enum ValuesOrSubquery {
+pub enum ValuesOrQuery {
     Values(Vec<DocumentExpr>),
-    Subquery(Box<Stage>),
+    Query(Box<Stage>),
 }
 
 

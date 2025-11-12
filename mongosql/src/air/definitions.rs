@@ -26,6 +26,7 @@ pub enum Stage {
     // Writes
     Delete(Delete),
     Update(Update),
+    Insert(Insert),
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -120,6 +121,18 @@ pub struct Update {
     pub collection: Collection,
     pub condition: Option<Box<Expression>>,
     pub updates: Expression,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub struct Insert {
+    pub collection: Collection,
+    pub source: ValuesOrQuery,
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum ValuesOrQuery {
+    Values(Vec<Expression>),
+    Query(Box<Stage>),
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]

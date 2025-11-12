@@ -29,7 +29,7 @@ use crate::{
         binding_tuple::Key, schema::SchemaInferenceState, visitor::Visitor, Derived, EquiJoin,
         Expression, Filter, Group, Insert, Join, JoinType, LateralJoin, Limit, MatchFilter,
         MqlStage, Offset, Project, ScalarFunction, ScalarFunctionApplication, Set, Sort, Stage,
-        Unwind, ValuesOrSubquery,
+        Unwind, ValuesOrQuery,
     },
     schema::ResultSet,
     SchemaCheckingMode,
@@ -302,12 +302,12 @@ impl StageMovementOptimizer {
             // Unlike other writes, an Insert stage can have a subquery as its source, and we want
             // to optimize that subquery.
             Stage::Insert(Insert { collection, source }) => {
-                if let ValuesOrSubquery::Subquery(subquery) = source {
+                if let ValuesOrQuery::Query(subquery) = source {
                     let (new_subquery, source_changed) =
                         StageMovementOptimizer::move_stages(*subquery, schema_state);
                     let new_insert = Stage::Insert(Insert {
                         collection,
-                        source: ValuesOrSubquery::Subquery(Box::new(new_subquery)),
+                        source: ValuesOrQuery::Query(Box::new(new_subquery)),
                     });
                     return (new_insert, source_changed);
                 }
