@@ -100,11 +100,18 @@ impl MqlTranslator {
         );
 
         match mir_insert.source {
-            ValuesOrQuery::Values(_) => {
-                todo!()
+            ValuesOrQuery::Values(values) => {
+                let source = air::ValuesOrQuery::Values(self.translate_document(values)?);
+                Ok(air::Stage::Insert(air::Insert {
+                    collection: air::Collection {
+                        db: mir_insert.collection.db,
+                        collection: mir_insert.collection.collection,
+                    },
+                    source,
+                }))
             }
-            ValuesOrQuery::Query(ref subquery) => {
-                let query = self.translate_stage(*subquery.clone())?;
+            ValuesOrQuery::Query(subquery) => {
+                let query = self.translate_stage(*subquery)?;
                 let query = self.append_unnest_stage(query)?;
                 let source = air::ValuesOrQuery::Query(Box::new(query));
 

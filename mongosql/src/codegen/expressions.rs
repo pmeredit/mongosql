@@ -123,28 +123,32 @@ impl MqlCodeGenerator {
 
     fn codegen_literal(&self, lit: air::LiteralValue) -> Result<Bson> {
         use air::LiteralValue::*;
+        let lit = match lit {
+            Null => Bson::Null,
+            Boolean(b) => Bson::Boolean(b),
+            String(s) => Bson::String(s),
+            Integer(i) => Bson::Int32(i),
+            Long(l) => Bson::Int64(l),
+            Double(d) => Bson::Double(d),
+            Decimal128(d) => Bson::Decimal128(d),
+            ObjectId(o) => Bson::ObjectId(o),
+            DateTime(d) => Bson::DateTime(d),
+            DbPointer(d) => Bson::DbPointer(d),
+            Undefined => Bson::Undefined,
+            Timestamp(t) => Bson::Timestamp(t),
+            RegularExpression(r) => Bson::RegularExpression(r),
+            MinKey => Bson::MinKey,
+            MaxKey => Bson::MaxKey,
+            Symbol(s) => Bson::Symbol(s),
+            JavaScriptCode(j) => Bson::JavaScriptCode(j),
+            JavaScriptCodeWithScope(j) => Bson::JavaScriptCodeWithScope(j),
+            Binary(b) => Bson::Binary(b),
+        };
+        if self.no_literal_wrap {
+            return Ok(lit);
+        }
         Ok(bson::bson!({
-            "$literal": match lit {
-                Null => Bson::Null,
-                Boolean(b) => Bson::Boolean(b),
-                String(s) => Bson::String(s),
-                Integer(i) => Bson::Int32(i),
-                Long(l) => Bson::Int64(l),
-                Double(d) => Bson::Double(d),
-                Decimal128(d) => Bson::Decimal128(d),
-                ObjectId(o) => Bson::ObjectId(o),
-                DateTime(d) => Bson::DateTime(d),
-                DbPointer(d) => Bson::DbPointer(d),
-                Undefined => Bson::Undefined,
-                Timestamp(t) => Bson::Timestamp(t),
-                RegularExpression(r) => Bson::RegularExpression(r),
-                MinKey => Bson::MinKey,
-                MaxKey => Bson::MaxKey,
-                Symbol(s) => Bson::Symbol(s),
-                JavaScriptCode(j) => Bson::JavaScriptCode(j),
-                JavaScriptCodeWithScope(j) => Bson::JavaScriptCodeWithScope(j),
-                Binary(b) => Bson::Binary(b),
-            },
+            "$literal": lit
         }))
     }
 

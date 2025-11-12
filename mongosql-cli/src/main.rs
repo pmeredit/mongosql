@@ -200,6 +200,14 @@ fn run_query_and_display_results(
                 );
                 return Ok(());
             }
+            mongosql::OperationType::InsertMany => {
+                let insert_result = collection.insert_many(pipeline).run()?;
+                println!(
+                    "Inserted {} documents.",
+                    insert_result.inserted_ids.len()
+                );
+                return Ok(());
+            }
             mongosql::OperationType::Aggregate => {
                 let cursor = collection.aggregate(pipeline).run();
                 cursor?

@@ -170,7 +170,22 @@ impl MqlCodeGenerator {
 
     fn codegen_insert(&self, air_insert: air::Insert) -> Result<MqlTranslation> {
         match air_insert.source {
-            air::ValuesOrQuery::Values(_docs) => todo!(),
+            air::ValuesOrQuery::Values(value) => {
+                let codegenerator = MqlCodeGenerator {
+                    no_literal_wrap: true,
+                };
+                let insert_doc = codegenerator.codegen_expression(value)?;
+                if let Bson::Document(d) = insert_doc {
+                    Ok(MqlTranslation {
+                        database: Some(air_insert.collection.db),
+                        collection: Some(air_insert.collection.collection),
+                        operation_type: OperationType::InsertMany,
+                        pipeline: vec![d],
+                    })
+                } else {
+                    unreachable!("Insert values must be a document");
+                }
+            }
             air::ValuesOrQuery::Query(stage) => {
                 let mut stage_translation = self.codegen_stage(*stage)?;
                 stage_translation.pipeline.push(doc! {"$merge":

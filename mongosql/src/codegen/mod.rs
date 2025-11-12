@@ -32,10 +32,14 @@ pub struct MqlTranslation {
 }
 
 #[derive(Clone, Debug)]
-pub struct MqlCodeGenerator {}
+pub struct MqlCodeGenerator {
+    pub no_literal_wrap: bool,
+}
 
 pub fn generate_mql(plan: air::Stage) -> Result<MqlTranslation> {
-    let cg = MqlCodeGenerator {};
+    let cg = MqlCodeGenerator {
+        no_literal_wrap: false,
+    };
 
     cg.codegen_stage(plan)
 }
