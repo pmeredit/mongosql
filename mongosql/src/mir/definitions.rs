@@ -53,6 +53,9 @@ impl Stage {
 #[derive(PartialEq, Debug, Clone)]
 pub struct Delete {
     pub collection: Box<Collection>,
+    // We need the alias because we do not construct an alias project like in SELECT queries.
+    // We use this to patch up the mapping registry during translation
+    pub alias: String,
     pub condition: Option<Box<Expression>>,
     // no need for schema cache here since DELETE does not produce output
 }
@@ -60,6 +63,9 @@ pub struct Delete {
 #[derive(PartialEq, Debug, Clone)]
 pub struct Update {
     pub collection: Box<Collection>,
+    // We need the alias because we do not construct an alias project like in SELECT queries.
+    // We use this to patch up the mapping registry during translation
+    pub alias: String,
     pub assignments: UniqueLinkedHashMap<String, Expression>,
     pub condition: Option<Box<Expression>>,
     // no need for schema cache here since UPDATE does not produce output

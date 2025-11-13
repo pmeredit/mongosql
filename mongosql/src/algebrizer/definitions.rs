@@ -10,7 +10,7 @@ use crate::{
         AliasedExpr, Expression, FieldAccess, OptionallyAliasedExpr, ReferenceExpr,
     },
     schema::{
-        self, Satisfaction, SchemaEnvironment, ANY_DOCUMENT, BOOLEAN_OR_NULLISH,
+        self, Satisfaction, Schema, SchemaEnvironment, ANY_DOCUMENT, BOOLEAN_OR_NULLISH,
         INTEGER_LONG_OR_NULLISH, INTEGER_OR_NULLISH, NULLISH, STRING_OR_NULLISH,
     },
     util::unique_linked_hash_map::UniqueLinkedHashMap,
@@ -326,63 +326,94 @@ impl<'a> Algebrizer<'a> {
         }
     }
 
-    pub fn algebrize_delete_statement(&self, ast_node: ast::Delete) -> Result<mir::Stage> {
-        let collection = if let ast::Datasource::Collection(c) = ast_node.target {
-            mir::Stage::Collection(mir::Collection {
-                db: c.database.unwrap_or_else(|| self.current_db.to_string()),
-                collection: c.collection.clone(),
-                cache: SchemaCache::new(),
+    fn get_schema_for_collection(&self, db: &str, collection: &str) -> Result<Schema> {
+        self.catalog
+            .get_schema_for_db_and_collection(db, collection)
+            .ok_or_else(|| {
+                Error::SchemaChecking(mir::schema::Error::CollectionNotFound(
+                    db.to_string(),
+                    collection.to_string(),
+                ))
             })
+            .cloned()
+    }
+
+    pub fn algebrize_delete_statement(&self, ast_node: ast::Delete) -> Result<mir::Stage> {
+        let (db, collection, alias) = if let ast::Datasource::Collection(c) = ast_node.target {
+            (
+                c.database.unwrap_or_else(|| self.current_db.to_string()),
+                c.collection.clone(),
+                c.alias.unwrap_or(c.collection),
+            )
         } else {
             return Err(Error::DeleteMustHaveCollectionSource);
         };
-        let from_result_set = collection.schema(&self.schema_inference_state())?;
-        let delete_algebrizer = self
-            .clone()
-            .with_merged_mappings(from_result_set.schema_env)?;
+        let collection_schema = self.get_schema_for_collection(&db, &collection);
+        let mut delete_env = SchemaEnvironment::new();
+        delete_env.insert(
+            Key::named(alias.as_str(), self.scope_level),
+            collection_schema?,
+        );
+
+        let delete_algebrizer = self.clone().with_merged_mappings(delete_env)?;
         let condition = if let Some(where_clause) = ast_node.where_clause {
-            Some(Box::new(
-                delete_algebrizer.algebrize_expression(where_clause, false)?,
-            ))
+            let cond_expr = delete_algebrizer.algebrize_expression(where_clause, false)?;
+            let cond_schema = cond_expr.schema(&delete_algebrizer.schema_inference_state())?;
+            if cond_schema.satisfies(&BOOLEAN_OR_NULLISH) != Satisfaction::Must {
+                return Err(Error::SchemaChecking(mir::schema::Error::SchemaChecking {
+                    name: "delete condition",
+                    required: BOOLEAN_OR_NULLISH.clone().into(),
+                    found: cond_schema.into(),
+                }));
+            }
+            Some(Box::new(cond_expr))
         } else {
             None
         };
-        let collection = if let mir::Stage::Collection(c) = collection {
-            Box::new(c)
-        } else {
-            unreachable!()
-        };
+        let collection = Box::new(mir::Collection {
+            db,
+            collection,
+            cache: SchemaCache::new(),
+        });
+        // We already schema checked above, so we can just return here.
         schema_check_return!(
-            self,
+            delete_algebrizer,
             mir::Stage::Delete(mir::Delete {
                 collection,
+                alias,
                 condition,
             })
         )
     }
 
     pub fn algebrize_update_statement(&self, ast_node: ast::Update) -> Result<mir::Stage> {
-        let (collection, datasource_name) = if let ast::Datasource::Collection(c) = ast_node.target
-        {
+        let (db, collection, alias) = if let ast::Datasource::Collection(c) = ast_node.target {
             (
-                mir::Stage::Collection(mir::Collection {
-                    db: c.database.unwrap_or_else(|| self.current_db.to_string()),
-                    collection: c.collection.clone(),
-                    cache: SchemaCache::new(),
-                }),
-                c.collection,
+                c.database.unwrap_or_else(|| self.current_db.to_string()),
+                c.collection.clone(),
+                c.alias.unwrap_or(c.collection),
             )
         } else {
             return Err(Error::UpdateMustHaveCollectionSource);
         };
-        let from_result_set = collection.schema(&self.schema_inference_state())?;
-        let update_algebrizer = self
-            .clone()
-            .with_merged_mappings(from_result_set.schema_env)?;
+        let collection_schema = self.get_schema_for_collection(&db, &collection);
+        let mut update_env = SchemaEnvironment::new();
+        update_env.insert(
+            Key::named(alias.as_str(), self.scope_level),
+            collection_schema?,
+        );
+        let update_algebrizer = self.clone().with_merged_mappings(update_env)?;
         let condition = if let Some(where_clause) = ast_node.where_clause {
-            Some(Box::new(
-                update_algebrizer.algebrize_expression(where_clause, false)?,
-            ))
+            let cond_expr = update_algebrizer.algebrize_expression(where_clause, false)?;
+            let cond_schema = cond_expr.schema(&update_algebrizer.schema_inference_state())?;
+            if cond_schema.satisfies(&BOOLEAN_OR_NULLISH) != Satisfaction::Must {
+                return Err(Error::SchemaChecking(mir::schema::Error::SchemaChecking {
+                    name: "delete condition",
+                    required: BOOLEAN_OR_NULLISH.clone().into(),
+                    found: cond_schema.into(),
+                }));
+            }
+            Some(Box::new(cond_expr))
         } else {
             None
         };
@@ -392,7 +423,7 @@ impl<'a> Algebrizer<'a> {
             // TODO: probably a cleaner way to get the column schema, look later.
             let ds_schema = mir::Expression::Reference(mir::ReferenceExpr {
                 // this clone is unfortunate, TODO reuse less code to avoid this
-                key: Key::named(datasource_name.as_str(), update_algebrizer.scope_level),
+                key: Key::named(alias.as_str(), update_algebrizer.scope_level),
             })
             .schema(&update_algebrizer.schema_inference_state())?;
             let column_schema = ds_schema
@@ -400,7 +431,7 @@ impl<'a> Algebrizer<'a> {
                 .ok_or_else(|| {
                     Error::UpdateAssignmentFieldDoesNotExistInColumn(
                         assignment.field.clone(),
-                        datasource_name.clone(),
+                        collection.clone(),
                     )
                 })?;
             let expression_schema =
@@ -415,17 +446,21 @@ impl<'a> Algebrizer<'a> {
                 .insert(assignment.field.clone(), expression)
                 .map_err(|_| Error::DuplicateUpdateAssignmentField(assignment.field))?;
         }
-        let collection = if let mir::Stage::Collection(c) = collection {
-            Box::new(c)
-        } else {
-            unreachable!()
-        };
-        // We already schema checked above, so we can just return here.
-        Ok(mir::Stage::Update(mir::Update {
+        let collection = Box::new(mir::Collection {
+            db,
             collection,
-            condition,
-            assignments,
-        }))
+            cache: SchemaCache::new(),
+        });
+        dbg!(&update_algebrizer);
+        schema_check_return!(
+            update_algebrizer,
+            mir::Stage::Update(mir::Update {
+                collection,
+                alias,
+                condition,
+                assignments,
+            })
+        )
     }
 
     pub fn algebrize_insert_statement(&self, ast_node: ast::Insert) -> Result<mir::Stage> {

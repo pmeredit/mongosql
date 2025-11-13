@@ -51,7 +51,7 @@ impl MqlTranslator {
 
     fn translate_delete(&mut self, mir_delete: mir::Delete) -> Result<air::Stage> {
         self.mapping_registry.insert(
-            Key::named(&mir_delete.collection.collection, self.scope_level),
+            Key::named(&mir_delete.alias, self.scope_level),
             MqlMappingRegistryValue::new(ROOT_NAME.to_string(), MqlReferenceType::Variable),
         );
 
@@ -71,7 +71,7 @@ impl MqlTranslator {
 
     fn translate_update(&mut self, mir_update: mir::Update) -> Result<air::Stage> {
         self.mapping_registry.insert(
-            Key::named(&mir_update.collection.collection, self.scope_level),
+            Key::named(&mir_update.alias, self.scope_level),
             MqlMappingRegistryValue::new(ROOT_NAME.to_string(), MqlReferenceType::Variable),
         );
 

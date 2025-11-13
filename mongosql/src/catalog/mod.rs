@@ -15,6 +15,12 @@ impl Catalog {
     pub fn get_schema_for_namespace(&self, namespace: &Namespace) -> Option<&Schema> {
         self.schemas.get(namespace)
     }
+
+    pub fn get_schema_for_db_and_collection(&self, db: &str, collection: &str) -> Option<&Schema> {
+        // TODO: not in love with this allocation, we should be able to key these on references.
+        let namespace = Namespace::new(db.to_string(), collection.to_string());
+        self.get_schema_for_namespace(&namespace)
+    }
 }
 
 impl FromIterator<(Namespace, Schema)> for Catalog {
