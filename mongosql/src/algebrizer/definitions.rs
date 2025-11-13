@@ -376,14 +376,11 @@ impl<'a> Algebrizer<'a> {
             cache: SchemaCache::new(),
         });
         // We already schema checked above, so we can just return here.
-        schema_check_return!(
-            delete_algebrizer,
-            mir::Stage::Delete(mir::Delete {
-                collection,
-                alias,
-                condition,
-            })
-        )
+        Ok(mir::Stage::Delete(mir::Delete {
+            collection,
+            alias,
+            condition,
+        }))
     }
 
     pub fn algebrize_update_statement(&self, ast_node: ast::Update) -> Result<mir::Stage> {
@@ -451,16 +448,12 @@ impl<'a> Algebrizer<'a> {
             collection,
             cache: SchemaCache::new(),
         });
-        dbg!(&update_algebrizer);
-        schema_check_return!(
-            update_algebrizer,
-            mir::Stage::Update(mir::Update {
-                collection,
-                alias,
-                condition,
-                assignments,
-            })
-        )
+        Ok(mir::Stage::Update(mir::Update {
+            collection,
+            alias,
+            condition,
+            assignments,
+        }))
     }
 
     pub fn algebrize_insert_statement(&self, ast_node: ast::Insert) -> Result<mir::Stage> {
