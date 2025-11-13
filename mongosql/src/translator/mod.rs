@@ -215,4 +215,44 @@ impl MqlTranslator {
             }),
         }))
     }
+
+    /// append_insert_unnest_stage goes through the mapping registry, getting all variables and references
+    /// representing datasources and flattening them into a vec.
+    /// If the length of the resultant vec is 1, then we only had one datasource and we generate a flat
+    /// ReplaceWith. If there was more than one, we generate a ReplaceWith with a MergeObjects.
+    /// This ultimately results in all namespaces being removed from the results the users will see
+    /// Unlike the previous append_unnest_stage, this ignores $$ROOT variables since they generate
+    /// problems when inserting documents.
+    fn append_insert_unnest_stage(
+        &mut self,
+        source: air::Stage,
+    ) -> std::result::Result<air::Stage, Error> {
+        let namespaces = self
+            .mapping_registry
+            .get_registry()
+            .values()
+            .filter_map(|v| {
+                match v.ref_type {
+                    MqlReferenceType::FieldRef => {
+                        Some(air::Expression::FieldRef(v.name.clone().into()))
+                    }
+                    _ => {
+                        None // ignore $$ROOT
+                    }
+                }
+            })
+            .collect::<Vec<air::Expression>>();
+
+        Ok(air::Stage::ReplaceWith(air::ReplaceWith {
+            source: Box::new(source),
+            new_root: Box::new(if namespaces.len() == 1 {
+                namespaces.first().unwrap().clone()
+            } else {
+                air::Expression::MqlSemanticOperator(air::MqlSemanticOperator {
+                    op: air::MqlOperator::MergeObjects,
+                    args: namespaces,
+                })
+            }),
+        }))
+    }
 }

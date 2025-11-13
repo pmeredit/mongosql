@@ -196,7 +196,7 @@ impl MqlCodeGenerator {
                 stage_translation.pipeline.push(doc! {"$merge":
                 { "into":
                     { "db": air_insert.collection.db, "coll": air_insert.collection.collection },
-                  "whenMatched": "keepExisting",
+                  "whenMatched": "fail",
                   "whenNotMatched": "insert"
                 }});
                 Ok(stage_translation)
