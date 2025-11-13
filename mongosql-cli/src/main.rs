@@ -1,5 +1,5 @@
 use agg_ast::definitions::Namespace;
-use bson::{doc, Document};
+use bson::{doc, Bson, Document};
 use clap::Parser;
 use mongodb::sync::{Client, Collection};
 use mongosql::{ast::{self, pretty_print::PrettyPrint}, build_catalog_from_catalog_schema, catalog::Catalog, json_schema::Schema, substitute_parameters};
@@ -132,16 +132,73 @@ fn main() -> Result<(), CliError> {
         let schema = serde_json::to_string_pretty(&translation.result_set_schema)
             .map_err(|e| CliError(e.to_string()))?;
         println!(
-            "target_db: {},\ntarget_collection: {:?},\nresult set schema:\n{}\noperation type:\n{:?}\npipeline:\n[",
-            translation.target_db, translation.target_collection, schema, translation.operation_type
+            "target_db: {},\ntarget_collection: {:?},\nresult set schema:\n{}\n",
+            translation.target_db, translation.target_collection, schema
         );
-        let bson::Bson::Array(pipeline) = pipeline else {
+        let bson::Bson::Array(printable_pipeline) = pipeline else {
             return Err(CliError("pipeline is not an array".to_string()));
         };
-        for doc in pipeline {
-            println!("    {doc},");
+        let print_pipeline = |pipeline: &[Bson]| -> Result<(), CliError> {
+                println!("[");
+                for doc in pipeline {
+                    println!("    {doc},");
+                }
+                println!(    "]");
+                Ok(())
+        };
+        let collection = translation
+            .target_collection
+            .clone();
+        match translation.operation_type {
+            mongosql::OperationType::Aggregate => {
+                let prelude = format!("db{}.aggregate(", 
+                    collection.map(
+                    |coll| format!(".{coll}")
+                ).unwrap_or_else(|| "".to_string() ));
+                println!("{prelude}");
+                print_pipeline(&printable_pipeline)?;
+                println!(")");
+            }
+            mongosql::OperationType::InsertMany => {
+                let prelude = format!("db{}.insertMany(", 
+                    collection.map(
+                    |coll| format!(".{coll}")
+                ).unwrap_or_else(|| "".to_string() ));
+                println!("{prelude}");
+                print_pipeline(&printable_pipeline)?;
+                println!(")");
+            }
+            mongosql::OperationType::UpdateMany => {
+                let prelude = format!("db{}.updateMany(", 
+                    collection.map(
+                    |coll| format!(".{coll}")
+                ).unwrap_or_else(|| "".to_string() ));
+                println!("{prelude}");
+                if printable_pipeline.len() >= 2 {
+                    println!("    {},", printable_pipeline[0]);
+                } else {
+                    println!("    {{}} ,");
+                }
+                print_pipeline(&printable_pipeline[1..])?;
+                println!(")");
+            }
+            mongosql::OperationType::DeleteMany => {
+                let prelude = format!("db{}.deleteMany(", 
+                    collection.map(
+                    |coll| format!(".{coll}")
+                ).unwrap_or_else(|| "".to_string() ));
+                println!("{prelude}");
+                if printable_pipeline.len() == 1 {
+                    println!("    {},", printable_pipeline[0]);
+                } else {
+                    println!("    {{}}");
+                }
+                println!(")");
+            }
+            _ => {
+                println!("Translation:");
+            }
         }
-        println!("]");
         Ok(())
     };
     // If the result flag is not set, we always want to print the translation, regardless of the translation flag.
